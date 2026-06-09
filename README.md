@@ -41,7 +41,7 @@ cd osn_lopi_dahsboard
 ```bash
 python -m venv venv
 source venv/bin/activate        # Linux / macOS
-source venv/Scripts/activate           # Windows
+source venv/Scripts/activate    # Windows
 ```
 
 ### 3. Install Dependensi
@@ -109,5 +109,4 @@ Lihat `requirements.txt` untuk daftar lengkap.
 **mashadinoor** · [GitHub](https://github.com/mashadinoor)
 
 ---
-
 > Dibuat dengan ❤️ untuk mendukung penyelenggaraan OSN LOPI yang lebih efisien.
