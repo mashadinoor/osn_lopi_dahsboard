@@ -247,10 +247,15 @@
     <!-- Header -->
     <div class="header">
       <div class="header-left">
+        <!-- JADI ini -->
+        {% if logo_b64 %}
+        <img src="data:image/png;base64,{{ logo_b64 }}" style="height: 40px; width: auto" />
+        {% else %}
         <div class="logo-box">L</div>
+        {% endif %}
         <div>
-          <div class="org-name">LOPI</div>
-          <div class="org-sub">Lembaga Olimpiade dan Prestasi Indonesia</div>
+          <div class="org-name">LOPI Prestasi Indonesia</div>
+          <div class="org-sub">“Menjadi Lembaga Pionir dalam Mengembangkan Pendidikan Sains Berstandar Olimpiade”</div>
         </div>
       </div>
       <div class="header-right">

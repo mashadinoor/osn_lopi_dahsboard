@@ -13,9 +13,9 @@ bp = Blueprint('main', __name__)
 def get_filters():
     return {
         'tahun':    request.args.get('tahun', 'semua'),
-        'kategori':  request.args.get('kategori', 'semua'),
-        'provinsi': request.args.get('provinsi', 'semua'),
-        'kab_kota': request.args.get('kab_kota', 'semua'),
+        'kategori':  request.args.get('kategori', 'semua'),   # comma-separated
+        'provinsi': request.args.get('provinsi', 'semua'),  # comma-separated
+        'kab_kota': request.args.get('kab_kota', 'semua'),  # comma-separated
         'bidang':   request.args.get('bidang', 'semua'),
     }
 
@@ -29,7 +29,21 @@ def index():
 @bp.route('/api/kabkota')
 def api_kabkota():
     provinsi = request.args.get('provinsi')
-    return jsonify(get_kabkota(provinsi if provinsi != 'semua' else None))
+    # Support multi-provinsi
+    if provinsi and provinsi != 'semua':
+        provs = [p for p in provinsi.split(',') if p]
+        results = []
+        for p in provs:
+            results.extend(get_kabkota(p))
+        # Deduplicate sambil preserve order
+        seen = set()
+        unique = []
+        for k in results:
+            if k not in seen:
+                seen.add(k)
+                unique.append(k)
+        return jsonify(sorted(unique))
+    return jsonify(get_kabkota(None))
 
 
 @bp.route('/api/summary')
