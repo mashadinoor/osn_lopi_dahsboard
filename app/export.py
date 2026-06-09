@@ -10,15 +10,15 @@ def generate_pdf(filters, pivot_type, df_pivot, summary):
     Kembalikan bytes PDF.
     """
     # Label filter untuk judul dokumen
-    jenjang  = filters.get('jenjang', 'Semua Jenjang') or 'Semua Jenjang'
+    kategori  = filters.get('kategori', 'Semua kategori') or 'Semua kategori'
     provinsi = filters.get('provinsi', 'Semua Provinsi') or 'Semua Provinsi'
     kab_kota = filters.get('kab_kota', '') or ''
     bidang   = filters.get('bidang', 'Semua Bidang') or 'Semua Bidang'
     tahun    = filters.get('tahun', 'Semua Tahun') or 'Semua Tahun'
 
-    # Format judul: Laporan Prestasi OSN [Jenjang] — [Provinsi] [Tahun]
+    # Format judul: Laporan Prestasi OSN [kategori] — [Provinsi] [Tahun]
     lokasi = kab_kota if kab_kota and kab_kota != 'semua' else provinsi
-    judul  = f'Laporan Prestasi OSN {jenjang} — {lokasi} {tahun}'
+    judul  = f'Laporan Prestasi OSN {kategori} — {lokasi} {tahun}'
 
     # Label kolom berdasarkan pivot type
     pivot_labels = {
@@ -33,7 +33,7 @@ def generate_pdf(filters, pivot_type, df_pivot, summary):
         timestamp=datetime.now().strftime('%d %B %Y, %H:%M WIB'),
         filters={
             'Tahun':    tahun,
-            'Jenjang':  jenjang,
+            'kategori':  kategori,
             'Provinsi': provinsi,
             'Kab/Kota': kab_kota or '—',
             'Bidang':   bidang,

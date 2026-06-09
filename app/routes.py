@@ -13,7 +13,7 @@ bp = Blueprint('main', __name__)
 def get_filters():
     return {
         'tahun':    request.args.get('tahun', 'semua'),
-        'jenjang':  request.args.get('jenjang', 'semua'),
+        'kategori':  request.args.get('kategori', 'semua'),
         'provinsi': request.args.get('provinsi', 'semua'),
         'kab_kota': request.args.get('kab_kota', 'semua'),
         'bidang':   request.args.get('bidang', 'semua'),

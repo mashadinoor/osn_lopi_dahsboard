@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 10px;
+        color: #1e293b;
+        background: white;
+      }
+
+      /* ── Page layout ── */
+      @page {
+        size: A4 landscape;
+        margin: 1.5cm 1.8cm;
+        @bottom-right {
+          content: "Halaman " counter(page) " dari " counter(pages);
+          font-size: 8px;
+          color: #94a3b8;
+        }
+      }
+
+      /* ── Header ── */
+      .header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        border-bottom: 2px solid #2563eb;
+        padding-bottom: 10px;
+        margin-bottom: 14px;
+      }
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .logo-box {
+        width: 36px;
+        height: 36px;
+        background: #2563eb;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 14px;
+      }
+
+      .org-name {
+        font-size: 11px;
+        font-weight: 700;
+        color: #1e293b;
+      }
+      .org-sub {
+        font-size: 8px;
+        color: #64748b;
+        margin-top: 1px;
+      }
+
+      .header-right {
+        text-align: right;
+      }
+      .doc-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #1e293b;
+      }
+      .doc-meta {
+        font-size: 8px;
+        color: #64748b;
+        margin-top: 3px;
+      }
+
+      /* ── Filter info ── */
+      .filter-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 14px;
+      }
+
+      .filter-chip {
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 2px 10px;
+        font-size: 8px;
+        color: #475569;
+      }
+
+      .filter-chip strong {
+        color: #1e293b;
+      }
+
+      /* ── Summary cards ── */
+      .cards {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+
+      .card {
+        flex: 1;
+        border-radius: 8px;
+        padding: 8px 10px;
+        border: 1px solid #e2e8f0;
+      }
+
+      .card-label {
+        font-size: 7.5px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-bottom: 2px;
+      }
+      .card-value {
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .card-osk {
+        background: #f8fafc;
+      }
+      .card-osk .card-label {
+        color: #64748b;
+      }
+      .card-osk .card-value {
+        color: #1e293b;
+      }
+
+      .card-osnp {
+        background: #eff6ff;
+      }
+      .card-osnp .card-label {
+        color: #2563eb;
+      }
+      .card-osnp .card-value {
+        color: #1d4ed8;
+      }
+
+      .card-osnsf {
+        background: #f5f3ff;
+      }
+      .card-osnsf .card-label {
+        color: #7c3aed;
+      }
+      .card-osnsf .card-value {
+        color: #6d28d9;
+      }
+
+      .card-osnf {
+        background: #eef2ff;
+      }
+      .card-osnf .card-label {
+        color: #4338ca;
+      }
+      .card-osnf .card-value {
+        color: #3730a3;
+      }
+
+      .card-medalis {
+        background: #fffbeb;
+      }
+      .card-medalis .card-label {
+        color: #d97706;
+      }
+      .card-medalis .card-value {
+        color: #b45309;
+      }
+
+      /* ── Table ── */
+      .section-title {
+        font-size: 9px;
+        font-weight: 700;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9px;
+      }
+
+      thead th {
+        background: #1e293b;
+        color: white;
+        font-weight: 600;
+        padding: 5px 8px;
+        text-align: left;
+        white-space: nowrap;
+      }
+
+      thead th.num {
+        text-align: right;
+      }
+
+      tbody tr:nth-child(even) td {
+        background: #f8fafc;
+      }
+      tbody tr:nth-child(odd) td {
+        background: white;
+      }
+
+      tbody td {
+        padding: 4px 8px;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+      }
+
+      tbody td.num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        color: #1e293b;
+        font-weight: 500;
+      }
+
+      tbody td.zero {
+        color: #cbd5e1;
+      }
+
+      /* ── Footer ── */
+      .footer {
+        margin-top: 16px;
+        padding-top: 8px;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        font-size: 7.5px;
+        color: #94a3b8;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <div class="header">
+      <div class="header-left">
+        <div class="logo-box">L</div>
+        <div>
+          <div class="org-name">LOPI</div>
+          <div class="org-sub">Lembaga Olimpiade dan Prestasi Indonesia</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="doc-title">{{ judul }}</div>
+        <div class="doc-meta">Diekspor pada {{ timestamp }}</div>
+      </div>
+    </div>
+
+    <!-- Filter chips -->
+    <div class="filter-bar">
+      {% for label, val in filters.items() %}
+      <div class="filter-chip"><strong>{{ label }}:</strong> {{ val }}</div>
+      {% endfor %}
+    </div>
+
+    <!-- Summary cards -->
+    <div class="cards">
+      <div class="card card-osnp">
+        <div class="card-label">Lolos OSP</div>
+        <div class="card-value">{{ "{:,}".format(summary.total_lolos_osnp or 0).replace(',', '.') }}</div>
+      </div>
+      {% if has_osnsf %}
+      <div class="card card-osnsf">
+        <div class="card-label">Lolos OSN-SF</div>
+        <div class="card-value">{{ "{:,}".format(summary.total_lolos_osnsf or 0).replace(',', '.') }}</div>
+      </div>
+      {% endif %}
+      <div class="card card-osnf">
+        <div class="card-label">Lolos OSN-F</div>
+        <div class="card-value">{{ "{:,}".format(summary.total_lolos_osnf or 0).replace(',', '.') }}</div>
+      </div>
+      <div class="card card-medalis">
+        <div class="card-label">Medalis</div>
+        <div class="card-value">{{ "{:,}".format(summary.total_medalis or 0).replace(',', '.') }}</div>
+      </div>
+    </div>
+
+    <!-- Pivot table -->
+    <div class="section-title">Rincian per {{ pivot_label }}</div>
+
+    {% set NUM = ['lolos_osnp','lolos_osnsf','lolos_osnf','jadi_medalis'] %} {% set COL_LABELS = { 'provinsi': 'Provinsi', 'kab_kota': 'Kab/Kota', 'sekolah': 'Sekolah', 'npsn': 'NPSN', 'lolos_osk': 'Lolos OSK', 'lolos_osnp': 'Lolos OSP', 'lolos_osnsf': 'Lolos OSN-SF', 'lolos_osnf': 'Lolos OSN-F',
+    'jadi_medalis':'Medalis', } %}
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 24px">#</th>
+          {% for col in columns %} {% if col != 'lolos_osnsf' or has_osnsf %}
+          <th class="{{ 'num' if col in NUM else '' }}">{{ COL_LABELS.get(col, col) }}</th>
+          {% endif %} {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td style="color: #94a3b8">{{ loop.index }}</td>
+          {% for col in columns %} {% if col != 'lolos_osnsf' or has_osnsf %} {% if col in NUM %} {% set v = row[col] %}
+          <td class="num {{ 'zero' if not v }}">{{ "{:,}".format(v | int).replace(',', '.') if v else '—' }}</td>
+          {% else %}
+          <td>{{ row[col] or '—' }}</td>
+          {% endif %} {% endif %} {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Footer -->
+    <div class="footer">
+      <span>LOPI — Data bersumber dari pengumuman resmi Puspresnas</span>
+      <span>{{ timestamp }}</span>
+    </div>
+  </body>
+</html>

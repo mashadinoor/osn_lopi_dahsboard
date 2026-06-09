@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Prestasi OSN — LOPI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+      body {
+        font-family: "Inter", system-ui, sans-serif;
+        background: #f8fafc;
+      }
+      .card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      }
+      .stat-card {
+        transition: transform 0.15s;
+      }
+      .stat-card:hover {
+        transform: translateY(-2px);
+      }
+      select {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th {
+        position: sticky;
+        top: 0;
+        background: #f1f5f9;
+        z-index: 1;
+      }
+      tr:hover td {
+        background: #f8fafc;
+      }
+      .tab-btn.active {
+        background: #2563eb;
+        color: white;
+      }
+      .tab-btn {
+        transition: all 0.15s;
+      }
+      #table-wrap {
+        max-height: 480px;
+        overflow-y: auto;
+      }
+      .loader {
+        border: 3px solid #e2e8f0;
+        border-top-color: #2563eb;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        animation: spin 0.7s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body class="min-h-screen">
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+          <span class="text-white font-bold text-sm">L</span>
+        </div>
+        <span class="font-semibold text-slate-800">Dashboard Prestasi OSN</span>
+        <span class="text-slate-400 hidden sm:inline">— LOPI</span>
+      </div>
+      <button onclick="exportPDF()" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
+        Export PDF
+      </button>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+      <!-- Filter Bar -->
+      <div class="card p-4">
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Filter</p>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div class="flex flex-col gap-1">
+            <label class="text-xs text-slate-500">Tahun</label>
+            <select id="f-tahun" onchange="applyFilters()" class="border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="semua">Semua Tahun</option>
+              {% for t in opts.tahun %}
+              <option value="{{ t }}">{{ t }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs text-slate-500">kategori</label>
+            <select id="f-kategori" onchange="applyFilters()" class="border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="semua">Semua kategori</option>
+              {% for j in opts.kategori %}
+              <option value="{{ j }}">{{ j }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs text-slate-500">Provinsi</label>
+            <select id="f-provinsi" onchange="onProvinsiChange()" class="border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="semua">Semua Provinsi</option>
+              {% for p in opts.provinsi %}
+              <option value="{{ p }}">{{ p }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs text-slate-500">Kab/Kota</label>
+            <select id="f-kabkota" onchange="applyFilters()" class="border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="semua">Semua Kab/Kota</option>
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs text-slate-500">Bidang</label>
+            <select id="f-bidang" onchange="applyFilters()" class="border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="semua">Semua Bidang</option>
+              {% for b in opts.bidang %}
+              <option value="{{ b }}">{{ b }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3" id="cards">
+        {% set card_data = [ ('Lolos OSP', 'total_lolos_osnp', 'bg-blue-50', 'text-blue-600', 'text-blue-900'), ('Lolos OSN-SF', 'total_lolos_osnsf', 'bg-violet-50', 'text-violet-600','text-violet-900'), ('Lolos OSN-F', 'total_lolos_osnf', 'bg-indigo-50', 'text-indigo-600','text-indigo-900'),
+        ('Medalis', 'total_medalis', 'bg-amber-50', 'text-amber-600', 'text-amber-900'), ] %} {% for label, key, bg, tc, vc in card_data %}
+        <div class="card stat-card {{ bg }} p-4">
+          <p class="text-xs font-medium {{ tc }} mb-1">{{ label }}</p>
+          <p class="text-2xl font-bold {{ vc }} tabular-nums" id="card-{{ key }}">—</p>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Chart -->
+      <div class="card p-4">
+        <p class="text-sm font-semibold text-slate-700 mb-4">Distribusi per Bidang</p>
+        <div class="relative h-56">
+          <canvas id="chart-bidang"></canvas>
+        </div>
+      </div>
+
+      <!-- Pivot Table -->
+      <div class="card p-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <p class="text-sm font-semibold text-slate-700">Tabel Pivot</p>
+          <div class="flex gap-2 flex-wrap">
+            <button onclick="setPivot('provinsi')" class="tab-btn active text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200" id="tab-provinsi">Per Provinsi</button>
+            <button onclick="setPivot('kabkota')" class="tab-btn text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600" id="tab-kabkota">Per Kab/Kota</button>
+            <button onclick="setPivot('sekolah')" class="tab-btn text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600" id="tab-sekolah">Per Sekolah</button>
+          </div>
+        </div>
+
+        <div id="table-loading" class="hidden flex justify-center py-8"><div class="loader"></div></div>
+        <div id="table-wrap" class="rounded-lg border border-slate-100 overflow-x-auto">
+          <table class="text-sm">
+            <thead id="table-head"></thead>
+            <tbody id="table-body"></tbody>
+          </table>
+        </div>
+        <p class="text-xs text-slate-400 mt-2" id="table-info"></p>
+      </div>
+    </main>
+
+    <script>
+      let currentPivot = "provinsi";
+      let chartBidang = null;
+
+      // ── Helpers ─────────────────────────────────────────────────────
+      function getFilters() {
+        return new URLSearchParams({
+          tahun: document.getElementById("f-tahun").value,
+          kategori: document.getElementById("f-kategori").value,
+          provinsi: document.getElementById("f-provinsi").value,
+          kab_kota: document.getElementById("f-kabkota").value,
+          bidang: document.getElementById("f-bidang").value,
+        });
+      }
+
+      function fmt(val) {
+        if (val === null || val === undefined) return "—";
+        return Number(val).toLocaleString("id-ID");
+      }
+
+      // ── Provinsi → update Kab/Kota dropdown ─────────────────────────
+      async function onProvinsiChange() {
+        const prov = document.getElementById("f-provinsi").value;
+        const res = await fetch("/api/kabkota?" + new URLSearchParams({ provinsi: prov }));
+        const data = await res.json();
+        const sel = document.getElementById("f-kabkota");
+        sel.innerHTML = '<option value="semua">Semua Kab/Kota</option>';
+        data.forEach((k) => {
+          const o = document.createElement("option");
+          o.value = k;
+          o.textContent = k;
+          sel.appendChild(o);
+        });
+        applyFilters();
+      }
+
+      // ── Summary cards ────────────────────────────────────────────────
+      async function loadSummary() {
+        const res = await fetch("/api/summary?" + getFilters());
+        const data = await res.json();
+        const keys = ["total_lolos_osnp", "total_lolos_osnsf", "total_lolos_osnf", "total_medalis"];
+        keys.forEach((k) => {
+          const el = document.getElementById("card-" + k);
+          if (el) el.textContent = fmt(data[k]);
+        });
+      }
+
+      // ── Chart ────────────────────────────────────────────────────────
+      async function loadChart() {
+        const res = await fetch("/api/chart/bidang?" + getFilters());
+        const data = await res.json();
+
+        const labels = data.map((d) => d.bidang);
+        const osnp = data.map((d) => d.lolos_osnp);
+        const osnsf = data.map((d) => d.lolos_osnsf ?? 0);
+        const osnf = data.map((d) => d.lolos_osnf ?? 0);
+        const medalis = data.map((d) => d.jadi_medalis);
+
+        if (chartBidang) chartBidang.destroy();
+        chartBidang = new Chart(document.getElementById("chart-bidang"), {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              { label: "Lolos OSP", data: osnp, backgroundColor: "#3b82f6" },
+              { label: "Lolos OSN-SF", data: osnsf, backgroundColor: "#8b5cf6" },
+              { label: "Lolos OSN-F", data: osnf, backgroundColor: "#6366f1" },
+              { label: "Medalis", data: medalis, backgroundColor: "#f59e0b" },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } } },
+            scales: {
+              x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+              y: { grid: { color: "#f1f5f9" }, ticks: { font: { size: 11 } } },
+            },
+          },
+        });
+      }
+
+      // ── Pivot table ──────────────────────────────────────────────────
+      const COL_LABELS = {
+        provinsi: "Provinsi",
+        kab_kota: "Kab/Kota",
+        sekolah: "Sekolah",
+        npsn: "NPSN",
+        lolos_osnp: "Lolos OSP",
+        lolos_osnsf: "Lolos OSN-SF",
+        lolos_osnf: "Lolos OSN-F",
+        jadi_medalis: "Medalis",
+      };
+
+      const NUM_COLS = ["lolos_osnp", "lolos_osnsf", "lolos_osnf", "jadi_medalis"];
+
+      async function loadPivot() {
+        document.getElementById("table-loading").classList.remove("hidden");
+        document.getElementById("table-wrap").classList.add("opacity-0");
+
+        const res = await fetch(`/api/pivot/${currentPivot}?` + getFilters());
+        const data = await res.json();
+
+        const head = document.getElementById("table-head");
+        const body = document.getElementById("table-body");
+
+        head.innerHTML = "<tr>" + data.columns.map((c) => `<th class="text-left text-xs font-semibold text-slate-500 px-3 py-2 whitespace-nowrap">${COL_LABELS[c] || c}</th>`).join("") + "</tr>";
+
+        body.innerHTML = data.rows
+          .map(
+            (row, i) =>
+              '<tr class="border-t border-slate-100">' +
+              data.columns
+                .map((c) => {
+                  const isNum = NUM_COLS.includes(c);
+                  return `<td class="px-3 py-2 text-sm ${isNum ? "text-left tabular-nums text-slate-700" : "text-slate-800"} whitespace-nowrap">${isNum ? fmt(row[c]) : row[c] || "—"}</td>`;
+                })
+                .join("") +
+              "</tr>",
+          )
+          .join("");
+
+        document.getElementById("table-info").textContent = `${data.rows.length} baris`;
+        document.getElementById("table-loading").classList.add("hidden");
+        document.getElementById("table-wrap").classList.remove("opacity-0");
+      }
+
+      function setPivot(type) {
+        currentPivot = type;
+        ["provinsi", "kabkota", "sekolah"].forEach((t) => {
+          const btn = document.getElementById("tab-" + t);
+          btn.classList.toggle("active", t === type);
+          btn.classList.toggle("text-slate-600", t !== type);
+        });
+        loadPivot();
+      }
+
+      // ── Apply semua filter ───────────────────────────────────────────
+      function applyFilters() {
+        loadSummary();
+        loadChart();
+        loadPivot();
+      }
+
+      // ── Export PDF ───────────────────────────────────────────────────
+      function exportPDF() {
+        const url = `/export/pdf/${currentPivot}?` + getFilters();
+        window.open(url, "_blank");
+      }
+
+      // ── Init ─────────────────────────────────────────────────────────
+      applyFilters();
+    </script>
+  </body>
+</html>

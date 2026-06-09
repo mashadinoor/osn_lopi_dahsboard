@@ -2,7 +2,7 @@ import sqlite3
 import pandas as pd
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent.parent / 'data' / 'osn_dashboard.db'
+DB_PATH = Path(__file__).parent.parent / 'data' / 'osn_lopi_dashboard.db'
 
 
 def get_conn():
@@ -17,7 +17,7 @@ def get_filter_options():
     conn = get_conn()
     opts = {}
     opts['tahun']   = [r[0] for r in conn.execute('SELECT DISTINCT tahun   FROM osn_siswa ORDER BY tahun').fetchall()]
-    opts['jenjang'] = [r[0] for r in conn.execute('SELECT DISTINCT jenjang FROM osn_siswa ORDER BY jenjang').fetchall()]
+    opts['kategori'] = [r[0] for r in conn.execute('SELECT DISTINCT kategori FROM osn_siswa ORDER BY kategori').fetchall()]
     opts['provinsi']= [r[0] for r in conn.execute('SELECT DISTINCT provinsi FROM osn_siswa ORDER BY provinsi').fetchall()]
     opts['bidang']  = [r[0] for r in conn.execute('SELECT DISTINCT bidang  FROM osn_siswa ORDER BY bidang').fetchall()]
     conn.close()
@@ -42,7 +42,7 @@ def get_kabkota(provinsi=None):
 def build_where(filters):
     """Bangun klausa WHERE dan params dari dict filter."""
     clauses, params = [], []
-    for col in ['tahun', 'jenjang', 'provinsi', 'kab_kota', 'bidang']:
+    for col in ['tahun', 'kategori', 'provinsi', 'kab_kota', 'bidang']:
         val = filters.get(col)
         if val and val != 'semua':
             clauses.append(f'{col} = ?')
@@ -54,7 +54,6 @@ def build_where(filters):
 # ── Pivot queries ────────────────────────────────────────────────
 
 PIVOT_SELECT = """
-    COUNT(*)              AS lolos_osk,
     SUM(lolos_osnp)       AS lolos_osnp,
     SUM(lolos_osnsf)      AS lolos_osnsf,
     SUM(lolos_osnf)       AS lolos_osnf,
@@ -107,7 +106,6 @@ def summary_cards(filters):
     conn = get_conn()
     row = conn.execute(f"""
         SELECT
-            COUNT(*)          AS total_lolos_osk,
             SUM(lolos_osnp)   AS total_lolos_osnp,
             SUM(lolos_osnsf)  AS total_lolos_osnsf,
             SUM(lolos_osnf)   AS total_lolos_osnf,
@@ -124,8 +122,9 @@ def chart_by_bidang(filters):
     conn = get_conn()
     df = pd.read_sql_query(f"""
         SELECT bidang,
-            COUNT(*)          AS lolos_osk,
             SUM(lolos_osnp)   AS lolos_osnp,
+            SUM(lolos_osnsf)  AS lolos_osnsf,
+            SUM(lolos_osnf)   AS lolos_osnf,
             SUM(jadi_medalis) AS jadi_medalis
         FROM osn_siswa {where}
         GROUP BY bidang
