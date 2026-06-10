@@ -1,644 +1,598 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard Prestasi OSN — LOPI</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <style>
-      body {
-        font-family: "Inter", system-ui, sans-serif;
-        background: #f8fafc;
-      }
-      .card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-      }
-      .stat-card {
-        transition: transform 0.15s;
-      }
-      .stat-card:hover {
-        transform: translateY(-2px);
-      }
-      table {
-        border-collapse: collapse;
-        width: 100%;
-      }
-      th {
-        position: sticky;
-        top: 0;
-        background: #f1f5f9;
-        z-index: 1;
-      }
-      tr:hover td {
-        background: #f8fafc;
-      }
-      .tab-btn.active {
-        background: #2563eb;
-        color: white;
-      }
-      .tab-btn {
-        transition: all 0.15s;
-      }
-      #table-wrap {
-        max-height: 480px;
-        overflow-y: auto;
-      }
-      .loader {
-        border: 3px solid #e2e8f0;
-        border-top-color: #2563eb;
-        border-radius: 50%;
-        width: 32px;
-        height: 32px;
-        animation: spin 0.7s linear infinite;
-      }
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard Prestasi OSN — LOPI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; background: #f8fafc; }
+    .card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .stat-card { transition: transform .15s; }
+    .stat-card:hover { transform: translateY(-2px); }
+    table { border-collapse: collapse; width: 100%; }
+    th { position: sticky; top: 0; background: #f1f5f9; z-index: 1; }
+    .tab-btn.active { background: #2563eb; color: white; }
+    .tab-btn { transition: all .15s; }
+    #table-wrap { max-height: 320px; overflow-y: auto; }
+    .loader { border: 3px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; width: 28px; height: 28px; animation: spin .7s linear infinite; margin: auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #map { height: 480px; border-radius: 12px; z-index: 0; }
+    .leaflet-popup-content-wrapper { border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,.12); }
 
-      /* Multi-select dropdown */
-      .ms-wrap {
-        position: relative;
-      }
-      .ms-trigger {
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 6px 10px;
-        font-size: 13px;
-        color: #374151;
-        cursor: pointer;
-        background: white;
-        min-height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 4px;
-        user-select: none;
-      }
-      .ms-trigger:hover {
-        border-color: #93c5fd;
-      }
-      .ms-trigger.open {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 2px #bfdbfe;
-      }
-      .ms-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 3px;
-        flex: 1;
-        min-width: 0;
-      }
-      .ms-tag {
-        background: #dbeafe;
-        color: #1d4ed8;
-        border-radius: 4px;
-        padding: 1px 6px;
-        font-size: 11px;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        gap: 3px;
-        white-space: nowrap;
-      }
-      .ms-tag .rm {
-        cursor: pointer;
-        opacity: 0.6;
-        font-size: 12px;
-        line-height: 1;
-      }
-      .ms-tag .rm:hover {
-        opacity: 1;
-      }
-      .ms-placeholder {
-        color: #9ca3af;
-        font-size: 13px;
-      }
-      .ms-chevron {
-        flex-shrink: 0;
-        color: #6b7280;
-        font-size: 10px;
-      }
+    /* Multi-select */
+    .ms-wrap { position: relative; }
+    .ms-trigger { border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 10px; font-size: 13px; color: #374151; cursor: pointer; background: white; min-height: 36px; display: flex; align-items: center; justify-content: space-between; gap: 4px; user-select: none; }
+    .ms-trigger:hover { border-color: #93c5fd; }
+    .ms-trigger.open { border-color: #3b82f6; box-shadow: 0 0 0 2px #bfdbfe; }
+    .ms-tags { display: flex; flex-wrap: wrap; gap: 3px; flex: 1; min-width: 0; }
+    .ms-tag { background: #dbeafe; color: #1d4ed8; border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 500; display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+    .ms-tag .rm { cursor: pointer; opacity: .6; font-size: 12px; }
+    .ms-tag .rm:hover { opacity: 1; }
+    .ms-placeholder { color: #9ca3af; font-size: 13px; }
+    .ms-chevron { flex-shrink: 0; color: #6b7280; font-size: 10px; }
+    .ms-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: white; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.1); z-index: 100; display: none; overflow: hidden; min-width: 200px; }
+    .ms-dropdown.open { display: block; }
+    .ms-search { padding: 8px 10px; border-bottom: 1px solid #f1f5f9; }
+    .ms-search input { width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px; font-size: 12px; outline: none; }
+    .ms-search input:focus { border-color: #3b82f6; }
+    .ms-list { max-height: 200px; overflow-y: auto; padding: 4px; }
+    .ms-option { display: flex; align-items: center; padding: 5px 8px; border-radius: 6px; cursor: pointer; font-size: 12px; color: #374151; gap: 8px; }
+    .ms-option:hover { background: #f1f5f9; }
+    .ms-option.selected { background: #eff6ff; color: #1d4ed8; font-weight: 500; }
+    .ms-option input[type=checkbox] { accent-color: #2563eb; }
+    .ms-empty { padding: 12px; text-align: center; color: #9ca3af; font-size: 12px; }
+    .ms-actions { padding: 6px 10px; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; }
+    .ms-actions button { font-size: 11px; color: #2563eb; cursor: pointer; }
+    .ms-actions button:hover { text-decoration: underline; }
 
-      .ms-dropdown {
-        position: absolute;
-        top: calc(100% + 4px);
-        left: 0;
-        right: 0;
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-        z-index: 100;
-        display: none;
-        overflow: hidden;
-      }
-      .ms-dropdown.open {
-        display: block;
-      }
-      .ms-search {
-        padding: 8px 10px;
-        border-bottom: 1px solid #f1f5f9;
-      }
-      .ms-search input {
-        width: 100%;
-        border: 1px solid #e2e8f0;
-        border-radius: 6px;
-        padding: 4px 8px;
-        font-size: 12px;
-        outline: none;
-      }
-      .ms-search input:focus {
-        border-color: #3b82f6;
-      }
-      .ms-list {
-        max-height: 200px;
-        overflow-y: auto;
-        padding: 4px;
-      }
-      .ms-option {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 5px 8px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 12px;
-        color: #374151;
-        gap: 8px;
-      }
-      .ms-option:hover {
-        background: #f1f5f9;
-      }
-      .ms-option.selected {
-        background: #eff6ff;
-        color: #1d4ed8;
-        font-weight: 500;
-      }
-      .ms-option input[type="checkbox"] {
-        accent-color: #2563eb;
-      }
-      .ms-empty {
-        padding: 12px;
-        text-align: center;
-        color: #9ca3af;
-        font-size: 12px;
-      }
-      .ms-actions {
-        padding: 6px 10px;
-        border-top: 1px solid #f1f5f9;
-        display: flex;
-        justify-content: space-between;
-      }
-      .ms-actions button {
-        font-size: 11px;
-        color: #2563eb;
-        cursor: pointer;
-      }
-      .ms-actions button:hover {
-        text-decoration: underline;
-      }
-    </style>
-  </head>
-  <body class="min-h-screen">
-    <!-- Navbar -->
-    <nav class="bg-white border-b border-slate-200 sticky top-0 z-10">
-      <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <img src="/static/img/logo.png" class="w-32 h-auto" alt="LOPI" />
-          <span class="font-semibold text-slate-800">Dashboard Prestasi OSN</span>
-          <span class="text-slate-400 hidden sm:inline">— LOPI</span>
-        </div>
-        <button onclick="exportPDF()" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
-          Export PDF
-        </button>
+    /* Funnel */
+    .funnel-row { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+    .funnel-bar-outer { flex: 1; height: 44px; display: flex; align-items: center; }
+    .funnel-bar { height: 100%; border-radius: 6px; transition: width .5s ease; min-width: 2px; margin: 0 auto; }
+    .funnel-meta { display: flex; flex-direction: column; align-items: flex-end; min-width: 60px; }
+    .funnel-meta-value { font-size: 13px; font-weight: 600; color: #1e293b; line-height: 1.3; }
+    .funnel-meta-pct { font-size: 11px; color: #94a3b8; line-height: 1.3; }
+    .funnel-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    .funnel-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #64748b; }
+    .funnel-legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+<!-- Navbar -->
+<nav class="bg-white border-b border-slate-200 sticky top-0 z-10">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <img src="/static/img/logo.png" class="h-8 w-auto" alt="LOPI"/>
+      <span class="font-semibold text-slate-800">Dashboard Prestasi OSN</span>
+      <span class="text-slate-400 hidden sm:inline">— LOPI</span>
+    </div>
+    <button onclick="exportPDF()" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      Export PDF
+    </button>
+  </div>
+</nav>
+
+<main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+  <!-- Filter Bar -->
+  <div class="card p-4">
+    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Filter</p>
+    <div class="flex flex-wrap gap-3">
+
+      <div class="flex flex-col gap-1 min-w-[110px] flex-1">
+        <label class="text-xs text-slate-500">Tahun</label>
+        <select id="f-tahun" onchange="applyFilters()" class="border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white">
+          <option value="semua">Semua Tahun</option>
+          {% for t in opts.tahun %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+        </select>
       </div>
-    </nav>
 
-    <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
-      <!-- Filter Bar -->
-      <div class="card p-4">
-        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Filter</p>
-        <div class="flex flex-wrap gap-3">
-          <!-- Tahun (single) -->
-          <div class="flex flex-col gap-1 min-w-[120px] flex-1">
-            <label class="text-xs text-slate-500">Tahun</label>
-            <select id="f-tahun" onchange="applyFilters()" class="border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white">
-              <option value="semua">Semua Tahun</option>
-              {% for t in opts.tahun %}
-              <option value="{{ t }}">{{ t }}</option>
+      <div class="flex flex-col gap-1 min-w-[130px] flex-1">
+        <label class="text-xs text-slate-500">Kategori</label>
+        <div class="ms-wrap" id="ms-kategori">
+          <div class="ms-trigger" onclick="toggleDropdown('kategori')">
+            <div class="ms-tags" id="tags-kategori"><span class="ms-placeholder">Semua Kategori</span></div>
+            <span class="ms-chevron">▼</span>
+          </div>
+          <div class="ms-dropdown" id="drop-kategori">
+            <div class="ms-search"><input type="text" placeholder="Cari kategori..." oninput="filterOptions('kategori', this.value)"/></div>
+            <div class="ms-list" id="list-kategori">
+              {% for j in opts.kategori %}
+              <div class="ms-option" data-value="{{ j }}" onclick="toggleOption('kategori', '{{ j }}')">
+                <input type="checkbox" onclick="event.stopPropagation()"/> {{ j }}
+              </div>
               {% endfor %}
-            </select>
-          </div>
-
-          <!-- Kategori (multi) -->
-          <div class="flex flex-col gap-1 min-w-[140px] flex-1">
-            <label class="text-xs text-slate-500">Kategori</label>
-            <div class="ms-wrap" id="ms-kategori">
-              <div class="ms-trigger" onclick="toggleDropdown('kategori')">
-                <div class="ms-tags" id="tags-kategori"><span class="ms-placeholder">Semua Kategori</span></div>
-                <span class="ms-chevron">▼</span>
-              </div>
-              <div class="ms-dropdown" id="drop-kategori">
-                <div class="ms-search"><input type="text" placeholder="Cari kategori..." oninput="filterOptions('kategori', this.value)" /></div>
-                <div class="ms-list" id="list-kategori">
-                  {% for j in opts.kategori %}
-                  <div class="ms-option" data-value="{{ j }}" onclick="toggleOption('kategori', '{{ j }}')"><input type="checkbox" onclick="event.stopPropagation()" /> {{ j }}</div>
-                  {% endfor %}
-                </div>
-                <div class="ms-actions">
-                  <button onclick="clearAll('kategori')">Hapus semua</button>
-                  <button onclick="selectAll('kategori')">Pilih semua</button>
-                </div>
-              </div>
+            </div>
+            <div class="ms-actions">
+              <button onclick="clearAll('kategori')">Hapus semua</button>
+              <button onclick="selectAll('kategori')">Pilih semua</button>
             </div>
           </div>
+        </div>
+      </div>
 
-          <!-- Provinsi (multi) -->
-          <div class="flex flex-col gap-1 min-w-[180px] flex-2">
-            <label class="text-xs text-slate-500">Provinsi</label>
-            <div class="ms-wrap" id="ms-provinsi">
-              <div class="ms-trigger" onclick="toggleDropdown('provinsi')">
-                <div class="ms-tags" id="tags-provinsi"><span class="ms-placeholder">Semua Provinsi</span></div>
-                <span class="ms-chevron">▼</span>
-              </div>
-              <div class="ms-dropdown" id="drop-provinsi">
-                <div class="ms-search"><input type="text" placeholder="Cari provinsi..." oninput="filterOptions('provinsi', this.value)" /></div>
-                <div class="ms-list" id="list-provinsi">
-                  {% for p in opts.provinsi %}
-                  <div class="ms-option" data-value="{{ p }}" onclick="toggleOption('provinsi', '{{ p }}')"><input type="checkbox" onclick="event.stopPropagation()" /> {{ p }}</div>
-                  {% endfor %}
-                </div>
-                <div class="ms-actions">
-                  <button onclick="clearAll('provinsi')">Hapus semua</button>
-                  <button onclick="selectAll('provinsi')">Pilih semua</button>
-                </div>
-              </div>
-            </div>
+      <div class="flex flex-col gap-1 min-w-[170px] flex-2">
+        <label class="text-xs text-slate-500">Provinsi</label>
+        <div class="ms-wrap" id="ms-provinsi">
+          <div class="ms-trigger" onclick="toggleDropdown('provinsi')">
+            <div class="ms-tags" id="tags-provinsi"><span class="ms-placeholder">Semua Provinsi</span></div>
+            <span class="ms-chevron">▼</span>
           </div>
-
-          <!-- Kab/Kota (multi) -->
-          <div class="flex flex-col gap-1 min-w-[180px] flex-2">
-            <label class="text-xs text-slate-500">Kab/Kota</label>
-            <div class="ms-wrap" id="ms-kabkota">
-              <div class="ms-trigger" onclick="toggleDropdown('kabkota')">
-                <div class="ms-tags" id="tags-kabkota"><span class="ms-placeholder">Semua Kab/Kota</span></div>
-                <span class="ms-chevron">▼</span>
+          <div class="ms-dropdown" id="drop-provinsi">
+            <div class="ms-search"><input type="text" placeholder="Cari provinsi..." oninput="filterOptions('provinsi', this.value)"/></div>
+            <div class="ms-list" id="list-provinsi">
+              {% for p in opts.provinsi %}
+              <div class="ms-option" data-value="{{ p }}" onclick="toggleOption('provinsi', '{{ p }}')">
+                <input type="checkbox" onclick="event.stopPropagation()"/> {{ p }}
               </div>
-              <div class="ms-dropdown" id="drop-kabkota">
-                <div class="ms-search"><input type="text" placeholder="Cari kab/kota..." oninput="filterOptions('kabkota', this.value)" /></div>
-                <div class="ms-list" id="list-kabkota"><div class="ms-empty">Pilih provinsi dulu</div></div>
-                <div class="ms-actions">
-                  <button onclick="clearAll('kabkota')">Hapus semua</button>
-                  <button onclick="selectAll('kabkota')">Pilih semua</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Bidang (single) -->
-          <div class="flex flex-col gap-1 min-w-[150px] flex-1">
-            <label class="text-xs text-slate-500">Bidang</label>
-            <select id="f-bidang" onchange="applyFilters()" class="border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white">
-              <option value="semua">Semua Bidang</option>
-              {% for b in opts.bidang %}
-              <option value="{{ b }}">{{ b }}</option>
               {% endfor %}
-            </select>
+            </div>
+            <div class="ms-actions">
+              <button onclick="clearAll('provinsi')">Hapus semua</button>
+              <button onclick="selectAll('provinsi')">Pilih semua</button>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Summary Cards -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div class="card stat-card bg-blue-50 p-4">
-          <p class="text-xs font-medium text-blue-600 mb-1">Lolos OSP</p>
-          <p class="text-2xl font-bold text-blue-900 tabular-nums" id="card-total_lolos_osnp">—</p>
-        </div>
-        <div class="card stat-card bg-violet-50 p-4">
-          <p class="text-xs font-medium text-violet-600 mb-1">Lolos OSN-SF</p>
-          <p class="text-2xl font-bold text-violet-900 tabular-nums" id="card-total_lolos_osnsf">—</p>
-        </div>
-        <div class="card stat-card bg-indigo-50 p-4">
-          <p class="text-xs font-medium text-indigo-600 mb-1">Lolos OSN-F</p>
-          <p class="text-2xl font-bold text-indigo-900 tabular-nums" id="card-total_lolos_osnf">—</p>
-        </div>
-        <div class="card stat-card bg-amber-50 p-4">
-          <p class="text-xs font-medium text-amber-600 mb-1">Medalis</p>
-          <p class="text-2xl font-bold text-amber-900 tabular-nums" id="card-total_medalis">—</p>
-        </div>
-      </div>
-
-      <!-- Chart -->
-      <div class="card p-4">
-        <p class="text-sm font-semibold text-slate-700 mb-4">Distribusi per Bidang</p>
-        <div class="relative h-56">
-          <canvas id="chart-bidang"></canvas>
-        </div>
-      </div>
-
-      <!-- Pivot Table -->
-      <div class="card p-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <p class="text-sm font-semibold text-slate-700">Tabel Pivot</p>
-          <div class="flex gap-2 flex-wrap">
-            <button onclick="setPivot('provinsi')" class="tab-btn active text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200" id="tab-provinsi">Per Provinsi</button>
-            <button onclick="setPivot('kabkota')" class="tab-btn text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600" id="tab-kabkota">Per Kab/Kota</button>
-            <button onclick="setPivot('sekolah')" class="tab-btn text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600" id="tab-sekolah">Per Sekolah</button>
+      <div class="flex flex-col gap-1 min-w-[170px] flex-2">
+        <label class="text-xs text-slate-500">Kab/Kota</label>
+        <div class="ms-wrap" id="ms-kabkota">
+          <div class="ms-trigger" onclick="toggleDropdown('kabkota')">
+            <div class="ms-tags" id="tags-kabkota"><span class="ms-placeholder">Semua Kab/Kota</span></div>
+            <span class="ms-chevron">▼</span>
+          </div>
+          <div class="ms-dropdown" id="drop-kabkota">
+            <div class="ms-search"><input type="text" placeholder="Cari kab/kota..." oninput="filterOptions('kabkota', this.value)"/></div>
+            <div class="ms-list" id="list-kabkota"><div class="ms-empty">Pilih provinsi dulu</div></div>
+            <div class="ms-actions">
+              <button onclick="clearAll('kabkota')">Hapus semua</button>
+              <button onclick="selectAll('kabkota')">Pilih semua</button>
+            </div>
           </div>
         </div>
-        <div id="table-loading" class="hidden justify-center py-8"><div class="loader"></div></div>
-        <div id="table-wrap" class="rounded-lg border border-slate-100 overflow-x-auto">
-          <table class="text-sm">
-            <thead id="table-head"></thead>
-            <tbody id="table-body"></tbody>
-          </table>
-        </div>
-        <p class="text-xs text-slate-400 mt-2" id="table-info"></p>
       </div>
-    </main>
 
-    <script>
-      let currentPivot = "provinsi";
-      let chartBidang = null;
+      <div class="flex flex-col gap-1 min-w-[140px] flex-1">
+        <label class="text-xs text-slate-500">Bidang</label>
+        <select id="f-bidang" onchange="applyFilters()" class="border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white">
+          <option value="semua">Semua Bidang</option>
+          {% for b in opts.bidang %}<option value="{{ b }}">{{ b }}</option>{% endfor %}
+        </select>
+      </div>
 
-      // ── Multi-select state ───────────────────────────────────────────
-      const msState = { kategori: new Set(), provinsi: new Set(), kabkota: new Set() };
+    </div>
+  </div>
 
-      function toggleDropdown(name) {
-        const drop = document.getElementById("drop-" + name);
-        const trigger = drop.previousElementSibling;
-        const isOpen = drop.classList.contains("open");
-        // Tutup semua dropdown lain
-        document.querySelectorAll(".ms-dropdown.open").forEach((d) => {
-          d.classList.remove("open");
-          d.previousElementSibling.classList.remove("open");
-        });
-        if (!isOpen) {
-          drop.classList.add("open");
-          trigger.classList.add("open");
-          drop.querySelector("input[type=text]")?.focus();
-        }
-      }
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div class="card stat-card bg-blue-50 p-4">
+      <p class="text-xs font-medium text-blue-600 mb-1">Lolos OSP</p>
+      <p class="text-2xl font-bold text-blue-900 tabular-nums" id="card-total_lolos_osnp">—</p>
+    </div>
+    <div class="card stat-card bg-violet-50 p-4">
+      <p class="text-xs font-medium text-violet-600 mb-1">Lolos OSN-SF</p>
+      <p class="text-2xl font-bold text-violet-900 tabular-nums" id="card-total_lolos_osnsf">—</p>
+    </div>
+    <div class="card stat-card bg-indigo-50 p-4">
+      <p class="text-xs font-medium text-indigo-600 mb-1">Lolos OSN-F</p>
+      <p class="text-2xl font-bold text-indigo-900 tabular-nums" id="card-total_lolos_osnf">—</p>
+    </div>
+    <div class="card stat-card bg-amber-50 p-4">
+      <p class="text-xs font-medium text-amber-600 mb-1">Medalis</p>
+      <p class="text-2xl font-bold text-amber-900 tabular-nums" id="card-total_medalis">—</p>
+    </div>
+  </div>
 
-      // Tutup dropdown kalau klik di luar
-      document.addEventListener("click", (e) => {
-        if (!e.target.closest(".ms-wrap")) {
-          document.querySelectorAll(".ms-dropdown.open").forEach((d) => {
-            d.classList.remove("open");
-            d.previousElementSibling.classList.remove("open");
-          });
-        }
+  <!-- Two-column: Funnel (kiri) + Top 5 (kanan) -->
+  <!-- Mobile: Top 5 dulu, lalu Funnel -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- Top 5 Pivot — tampil pertama di mobile via order -->
+    <div class="card p-4 order-1 lg:order-2">
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-sm font-semibold text-slate-700">Top 5</p>
+        <div class="flex gap-1.5">
+          <button onclick="setPivot('provinsi')" class="tab-btn active text-xs font-medium px-2.5 py-1 rounded-lg border border-slate-200" id="tab-provinsi">Provinsi</button>
+          <button onclick="setPivot('kabkota')"  class="tab-btn text-xs font-medium px-2.5 py-1 rounded-lg border border-slate-200 text-slate-600" id="tab-kabkota">Kab/Kota</button>
+          <button onclick="setPivot('sekolah')"  class="tab-btn text-xs font-medium px-2.5 py-1 rounded-lg border border-slate-200 text-slate-600" id="tab-sekolah">Sekolah</button>
+        </div>
+      </div>
+      <div id="table-loading" class="hidden py-6"><div class="loader"></div></div>
+      <div id="table-wrap" class="rounded-lg border border-slate-100 overflow-x-auto">
+        <table class="text-sm">
+          <thead id="table-head"></thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Funnel Chart — tampil kedua di mobile -->
+    <div class="card p-4 order-2 lg:order-1">
+      <p class="text-sm font-semibold text-slate-700 mb-1">Funnel Tahapan OSN</p>
+      <p class="text-xs text-slate-400 mb-4">Berdasarkan semua bidang sesuai filter aktif</p>
+      <div id="funnel-wrap" class="space-y-1 px-2"></div>
+    </div>
+
+  </div>
+
+  <!-- Peta Indonesia — desktop only -->
+  <div class="hidden lg:block card p-4">
+    <p class="text-sm font-semibold text-slate-700 mb-1">Sebaran per Provinsi</p>
+    <p class="text-xs text-slate-400 mb-4">Warna berdasarkan jumlah lolos OSP · Hover untuk detail</p>
+    <div id="map"></div>
+  </div>
+
+  <!-- Pesan mobile untuk peta -->
+  <div class="lg:hidden card p-4 text-center">
+    <p class="text-sm text-slate-500">🗺️ Peta interaktif hanya tersedia di desktop / PC</p>
+  </div>
+
+</main>
+
+<script>
+  let currentPivot = 'provinsi';
+  let leafletMap   = null;
+  let geojsonLayer = null;
+  let mapDataCache = null;
+
+  // ── Multi-select state ───────────────────────────────────────────
+  const msState = { kategori: new Set(), provinsi: new Set(), kabkota: new Set() };
+
+  function toggleDropdown(name) {
+    const drop = document.getElementById('drop-' + name);
+    const trigger = drop.previousElementSibling;
+    const isOpen = drop.classList.contains('open');
+    document.querySelectorAll('.ms-dropdown.open').forEach(d => {
+      d.classList.remove('open');
+      d.previousElementSibling.classList.remove('open');
+    });
+    if (!isOpen) {
+      drop.classList.add('open');
+      trigger.classList.add('open');
+      drop.querySelector('input[type=text]')?.focus();
+    }
+  }
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.ms-wrap')) {
+      document.querySelectorAll('.ms-dropdown.open').forEach(d => {
+        d.classList.remove('open');
+        d.previousElementSibling.classList.remove('open');
       });
+    }
+  });
 
-      function toggleOption(name, value) {
-        const set = msState[name];
-        if (set.has(value)) set.delete(value);
-        else set.add(value);
-        renderTags(name);
-        updateOptionChecks(name);
-        if (name === "provinsi") updateKabkota();
-        else applyFilters();
-      }
+  function toggleOption(name, value) {
+    const set = msState[name];
+    if (set.has(value)) set.delete(value);
+    else set.add(value);
+    renderTags(name);
+    updateOptionChecks(name);
+    if (name === 'provinsi') updateKabkota();
+    else applyFilters();
+  }
 
-      function renderTags(name) {
-        const container = document.getElementById("tags-" + name);
-        const set = msState[name];
-        if (set.size === 0) {
-          const labels = { kategori: "Semua kategori", provinsi: "Semua Provinsi", kabkota: "Semua Kab/Kota" };
-          container.innerHTML = `<span class="ms-placeholder">${labels[name]}</span>`;
-        } else {
-          container.innerHTML = [...set].map((v) => `<span class="ms-tag">${v} <span class="rm" onclick="event.stopPropagation();removeTag('${name}','${v}')">×</span></span>`).join("");
-        }
-      }
+  function renderTags(name) {
+    const container = document.getElementById('tags-' + name);
+    const set = msState[name];
+    const labels = { kategori: 'Semua Kategori', provinsi: 'Semua Provinsi', kabkota: 'Semua Kab/Kota' };
+    if (set.size === 0) {
+      container.innerHTML = `<span class="ms-placeholder">${labels[name]}</span>`;
+    } else {
+      container.innerHTML = [...set].map(v =>
+        `<span class="ms-tag">${v} <span class="rm" onclick="event.stopPropagation();removeTag('${name}','${v.replace(/'/g,"\\'")}')">×</span></span>`
+      ).join('');
+    }
+  }
 
-      function removeTag(name, value) {
-        msState[name].delete(value);
-        renderTags(name);
-        updateOptionChecks(name);
-        if (name === "provinsi") updateKabkota();
-        else applyFilters();
-      }
+  function removeTag(name, value) {
+    msState[name].delete(value);
+    renderTags(name);
+    updateOptionChecks(name);
+    if (name === 'provinsi') updateKabkota();
+    else applyFilters();
+  }
 
-      function updateOptionChecks(name) {
-        const set = msState[name];
-        document.querySelectorAll(`#list-${name} .ms-option`).forEach((opt) => {
-          const v = opt.dataset.value;
-          const cb = opt.querySelector("input[type=checkbox]");
-          if (set.has(v)) {
-            opt.classList.add("selected");
-            if (cb) cb.checked = true;
-          } else {
-            opt.classList.remove("selected");
-            if (cb) cb.checked = false;
-          }
-        });
-      }
+  function updateOptionChecks(name) {
+    const set = msState[name];
+    document.querySelectorAll(`#list-${name} .ms-option`).forEach(opt => {
+      const cb = opt.querySelector('input[type=checkbox]');
+      if (set.has(opt.dataset.value)) { opt.classList.add('selected'); if (cb) cb.checked = true; }
+      else { opt.classList.remove('selected'); if (cb) cb.checked = false; }
+    });
+  }
 
-      function filterOptions(name, query) {
-        const q = query.toLowerCase();
-        document.querySelectorAll(`#list-${name} .ms-option`).forEach((opt) => {
-          opt.style.display = opt.dataset.value.toLowerCase().includes(q) ? "" : "none";
-        });
-      }
+  function filterOptions(name, query) {
+    const q = query.toLowerCase();
+    document.querySelectorAll(`#list-${name} .ms-option`).forEach(opt => {
+      opt.style.display = opt.dataset.value.toLowerCase().includes(q) ? '' : 'none';
+    });
+  }
 
-      function clearAll(name) {
-        msState[name].clear();
-        renderTags(name);
-        updateOptionChecks(name);
-        if (name === "provinsi") updateKabkota();
-        else applyFilters();
-      }
+  function clearAll(name) {
+    msState[name].clear();
+    renderTags(name);
+    updateOptionChecks(name);
+    if (name === 'provinsi') updateKabkota();
+    else applyFilters();
+  }
 
-      function selectAll(name) {
-        document.querySelectorAll(`#list-${name} .ms-option`).forEach((opt) => {
-          if (opt.style.display !== "none") msState[name].add(opt.dataset.value);
-        });
-        renderTags(name);
-        updateOptionChecks(name);
-        if (name === "provinsi") updateKabkota();
-        else applyFilters();
-      }
+  function selectAll(name) {
+    document.querySelectorAll(`#list-${name} .ms-option`).forEach(opt => {
+      if (opt.style.display !== 'none') msState[name].add(opt.dataset.value);
+    });
+    renderTags(name);
+    updateOptionChecks(name);
+    if (name === 'provinsi') updateKabkota();
+    else applyFilters();
+  }
 
-      // ── Update Kab/Kota berdasarkan provinsi terpilih ───────────────
-      async function updateKabkota() {
-        msState.kabkota.clear();
-        renderTags("kabkota");
-        const provs = [...msState.provinsi];
-        const list = document.getElementById("list-kabkota");
-
-        if (provs.length === 0) {
-          list.innerHTML = '<div class="ms-empty">Pilih provinsi dulu</div>';
-          applyFilters();
-          return;
-        }
-
-        const res = await fetch("/api/kabkota?" + new URLSearchParams({ provinsi: provs.join(",") }));
-        const data = await res.json();
-
-        list.innerHTML = data
-          .map(
-            (k) =>
-              `<div class="ms-option" data-value="${k}" onclick="toggleOption('kabkota','${k}')">
-        <input type="checkbox" onclick="event.stopPropagation()"/> ${k}
-      </div>`,
-          )
-          .join("");
-
-        applyFilters();
-      }
-
-      // ── Build query params ───────────────────────────────────────────
-      function getFilters() {
-        const params = new URLSearchParams();
-        params.set("tahun", document.getElementById("f-tahun").value);
-        params.set("bidang", document.getElementById("f-bidang").value);
-        // Multi-select: kirim comma-separated
-        if (msState.kategori.size > 0) params.set("kategori", [...msState.kategori].join(","));
-        if (msState.provinsi.size > 0) params.set("provinsi", [...msState.provinsi].join(","));
-        if (msState.kabkota.size > 0) params.set("kab_kota", [...msState.kabkota].join(","));
-        return params;
-      }
-
-      function fmt(val) {
-        if (val === null || val === undefined) return "—";
-        return Number(val).toLocaleString("id-ID");
-      }
-
-      // ── Summary cards ────────────────────────────────────────────────
-      async function loadSummary() {
-        const res = await fetch("/api/summary?" + getFilters());
-        const data = await res.json();
-        ["total_lolos_osnp", "total_lolos_osnsf", "total_lolos_osnf", "total_medalis"].forEach((k) => {
-          const el = document.getElementById("card-" + k);
-          if (el) el.textContent = fmt(data[k]);
-        });
-      }
-
-      // ── Chart ────────────────────────────────────────────────────────
-      async function loadChart() {
-        const res = await fetch("/api/chart/bidang?" + getFilters());
-        const data = await res.json();
-
-        const labels = data.map((d) => d.bidang);
-        const osnp = data.map((d) => d.lolos_osnp ?? 0);
-        const osnsf = data.map((d) => d.lolos_osnsf ?? 0);
-        const osnf = data.map((d) => d.lolos_osnf ?? 0);
-        const medalis = data.map((d) => d.jadi_medalis ?? 0);
-
-        if (chartBidang) chartBidang.destroy();
-        chartBidang = new Chart(document.getElementById("chart-bidang"), {
-          type: "bar",
-          data: {
-            labels,
-            datasets: [
-              { label: "Lolos OSP", data: osnp, backgroundColor: "#3b82f6" },
-              { label: "Lolos OSN-SF", data: osnsf, backgroundColor: "#8b5cf6" },
-              { label: "Lolos OSN-F", data: osnf, backgroundColor: "#6366f1" },
-              { label: "Medalis", data: medalis, backgroundColor: "#f59e0b" },
-            ],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } } },
-            scales: {
-              x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-              y: { grid: { color: "#f1f5f9" }, ticks: { font: { size: 11 } } },
-            },
-          },
-        });
-      }
-
-      // ── Pivot table ──────────────────────────────────────────────────
-      const COL_LABELS = {
-        provinsi: "Provinsi",
-        kategori: "kategori",
-        kab_kota: "Kab/Kota",
-        sekolah: "Sekolah",
-        lolos_osnp: "Lolos OSP",
-        lolos_osnsf: "Lolos OSN-SF",
-        lolos_osnf: "Lolos OSN-F",
-        jadi_medalis: "Medalis",
-      };
-      const NUM_COLS = ["lolos_osnp", "lolos_osnsf", "lolos_osnf", "jadi_medalis"];
-
-      async function loadPivot() {
-        document.getElementById("table-loading").classList.remove("hidden");
-        document.getElementById("table-loading").style.display = "flex";
-        document.getElementById("table-wrap").style.opacity = "0.3";
-
-        const res = await fetch(`/api/pivot/${currentPivot}?` + getFilters());
-        const data = await res.json();
-
-        const head = document.getElementById("table-head");
-        const body = document.getElementById("table-body");
-
-        head.innerHTML = "<tr>" + data.columns.map((c) => `<th class="text-left text-xs font-semibold text-slate-500 px-3 py-2 whitespace-nowrap ${NUM_COLS.includes(c) ? "text-right" : ""}">${COL_LABELS[c] || c}</th>`).join("") + "</tr>";
-
-        // Warna baris per kategori
-        const kategoriColors = { SD: "bg-green-50", SMP: "bg-blue-50", SMA: "bg-purple-50" };
-
-        body.innerHTML = data.rows
-          .map((row, i) => {
-            const rowColor = kategoriColors[row.kategori] || "";
-            return (
-              '<tr class="border-t border-slate-100 ' +
-              rowColor +
-              '">' +
-              data.columns
-                .map((c) => {
-                  if (NUM_COLS.includes(c)) {
-                    const v = row[c];
-                    return `<td class="px-3 py-2 text-sm text-right tabular-nums ${v ? "text-slate-700 font-medium" : "text-slate-300"} whitespace-nowrap">${v ? fmt(v) : "—"}</td>`;
-                  }
-                  return `<td class="px-3 py-2 text-sm text-slate-800 whitespace-nowrap">${row[c] || "—"}</td>`;
-                })
-                .join("") +
-              "</tr>"
-            );
-          })
-          .join("");
-
-        document.getElementById("table-info").textContent = `${data.rows.length} baris`;
-        document.getElementById("table-loading").style.display = "none";
-        document.getElementById("table-wrap").style.opacity = "1";
-      }
-
-      function setPivot(type) {
-        currentPivot = type;
-        ["provinsi", "kabkota", "sekolah"].forEach((t) => {
-          const btn = document.getElementById("tab-" + t);
-          btn.classList.toggle("active", t === type);
-          btn.classList.toggle("text-slate-600", t !== type);
-        });
-        loadPivot();
-      }
-
-      // ── Apply semua filter ───────────────────────────────────────────
-      let debounceTimer;
-      function applyFilters() {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-          loadSummary();
-          loadChart();
-          loadPivot();
-        }, 300);
-      }
-
-      // ── Export PDF ───────────────────────────────────────────────────
-      function exportPDF() {
-        const url = `/export/pdf/${currentPivot}?` + getFilters();
-        window.open(url, "_blank");
-      }
-
-      // ── Init ─────────────────────────────────────────────────────────
+  async function updateKabkota() {
+    msState.kabkota.clear();
+    renderTags('kabkota');
+    const provs = [...msState.provinsi];
+    const list = document.getElementById('list-kabkota');
+    if (provs.length === 0) {
+      list.innerHTML = '<div class="ms-empty">Pilih provinsi dulu</div>';
       applyFilters();
-    </script>
-  </body>
+      return;
+    }
+    const res  = await fetch('/api/kabkota?' + new URLSearchParams({ provinsi: provs.join(',') }));
+    const data = await res.json();
+    list.innerHTML = data.map(k =>
+      `<div class="ms-option" data-value="${k}" onclick="toggleOption('kabkota','${k.replace(/'/g,"\\'")}')">
+        <input type="checkbox" onclick="event.stopPropagation()"/> ${k}
+      </div>`
+    ).join('');
+    applyFilters();
+  }
+
+  function getFilters() {
+    const params = new URLSearchParams();
+    params.set('tahun',  document.getElementById('f-tahun').value);
+    params.set('bidang', document.getElementById('f-bidang').value);
+    if (msState.kategori.size > 0)  params.set('kategori',  [...msState.kategori].join(','));
+    if (msState.provinsi.size > 0) params.set('provinsi', [...msState.provinsi].join(','));
+    if (msState.kabkota.size > 0)  params.set('kab_kota', [...msState.kabkota].join(','));
+    return params;
+  }
+
+  function fmt(val) {
+    if (val === null || val === undefined) return '—';
+    return Number(val).toLocaleString('id-ID');
+  }
+
+  // ── Summary cards ────────────────────────────────────────────────
+  async function loadSummary() {
+    const res  = await fetch('/api/summary?' + getFilters());
+    const data = await res.json();
+    ['total_lolos_osnp','total_lolos_osnsf','total_lolos_osnf','total_medalis'].forEach(k => {
+      const el = document.getElementById('card-' + k);
+      if (el) el.textContent = fmt(data[k]);
+    });
+  }
+
+  // ── Funnel Chart ─────────────────────────────────────────────────
+  const FUNNEL_STEPS = [
+    { key: 'lolos_osnp',   label: 'Lolos OSP',    color: '#3b82f6' },
+    { key: 'lolos_osnsf',  label: 'Lolos OSN-SF', color: '#8b5cf6' },
+    { key: 'lolos_osnf',   label: 'Lolos OSN-F',  color: '#6366f1' },
+    { key: 'jadi_medalis', label: 'Medalis',       color: '#f59e0b' },
+  ];
+
+  async function loadFunnel() {
+  const res  = await fetch('/api/funnel?' + getFilters());
+  const data = await res.json();
+
+  const wrap = document.getElementById('funnel-wrap');
+  const max  = data['lolos_osnp'] || 1;
+
+  const bars = FUNNEL_STEPS.map(step => {
+    const val = data[step.key] || 0;
+    const pct = max > 0 ? ((val / max) * 100) : 0;
+    const pctLabel = pct < 1 ? pct.toFixed(1) : Math.round(pct);
+    return `
+      <div class="funnel-row">
+        <div class="funnel-bar-outer">
+          <div class="funnel-bar" style="width:${Math.max(pct, 0.5)}%; background:${step.color};"></div>
+        </div>
+        <div class="funnel-meta">
+          <span class="funnel-meta-value">${fmt(val)}</span>
+          <span class="funnel-meta-pct">${pctLabel}%</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  const legend = `
+    <div class="funnel-legend">
+      ${FUNNEL_STEPS.map(s => `
+        <div class="funnel-legend-item">
+          <div class="funnel-legend-dot" style="background:${s.color};"></div>
+          ${s.label}
+        </div>`).join('')}
+    </div>`;
+
+    wrap.innerHTML = bars + legend;
+  }
+
+  // ── Pivot Table (Top 5) ──────────────────────────────────────────
+  const COL_LABELS = {
+    provinsi: 'Provinsi', kategori: 'Kategori', kab_kota: 'Kab/Kota',
+    sekolah: 'Sekolah', lolos_osnp: 'OSP', lolos_osnsf: 'SF',
+    lolos_osnf: 'Final', jadi_medalis: 'Medalis',
+  };
+  const NUM_COLS = ['lolos_osnp','lolos_osnsf','lolos_osnf','jadi_medalis'];
+  const kategori_COLOR = { SD: 'bg-green-50', SMP: 'bg-blue-50', SMA: 'bg-purple-50' };
+
+  async function loadPivot() {
+    document.getElementById('table-loading').classList.remove('hidden');
+    document.getElementById('table-loading').style.display = 'flex';
+    document.getElementById('table-wrap').style.opacity = '0.3';
+
+    const res  = await fetch(`/api/pivot/${currentPivot}?` + getFilters());
+    const data = await res.json();
+
+    document.getElementById('table-head').innerHTML = '<tr>' +
+      data.columns.map(c =>
+        `<th class="text-left text-xs font-semibold text-slate-500 px-3 py-2 whitespace-nowrap ${NUM_COLS.includes(c) ? 'text-right' : ''}">${COL_LABELS[c] || c}</th>`
+      ).join('') + '</tr>';
+
+    document.getElementById('table-body').innerHTML = data.rows.map((row, i) =>
+      `<tr class="border-t border-slate-100 ${kategori_COLOR[row.kategori] || ''}">
+        ${data.columns.map(c => {
+          if (NUM_COLS.includes(c)) {
+            const v = row[c];
+            return `<td class="px-3 py-2 text-xs text-right tabular-nums ${v ? 'text-slate-700 font-medium' : 'text-slate-300'} whitespace-nowrap">${v ? fmt(v) : '—'}</td>`;
+          }
+          return `<td class="px-3 py-2 text-xs text-slate-800 whitespace-nowrap">${row[c] || '—'}</td>`;
+        }).join('')}
+      </tr>`
+    ).join('');
+
+    document.getElementById('table-loading').style.display = 'none';
+    document.getElementById('table-wrap').style.opacity = '1';
+  }
+
+  function setPivot(type) {
+    currentPivot = type;
+    ['provinsi','kabkota','sekolah'].forEach(t => {
+      const btn = document.getElementById('tab-' + t);
+      btn.classList.toggle('active', t === type);
+      btn.classList.toggle('text-slate-600', t !== type);
+    });
+    loadPivot();
+  }
+
+  // ── Peta Leaflet ─────────────────────────────────────────────────
+  const PROV_NAME_MAP = {
+    'ACEH': 'Aceh', 'SUMATERA UTARA': 'Sumatera Utara', 'SUMATERA BARAT': 'Sumatera Barat',
+    'RIAU': 'Riau', 'KEPULAUAN RIAU': 'Kepulauan Riau', 'JAMBI': 'Jambi',
+    'SUMATERA SELATAN': 'Sumatera Selatan', 'KEPULAUAN BANGKA BELITUNG': 'Kepulauan Bangka Belitung',
+    'BENGKULU': 'Bengkulu', 'LAMPUNG': 'Lampung', 'DKI JAKARTA': 'DKI Jakarta',
+    'JAWA BARAT': 'Jawa Barat', 'BANTEN': 'Banten', 'JAWA TENGAH': 'Jawa Tengah',
+    'DI YOGYAKARTA': 'DI Yogyakarta', 'JAWA TIMUR': 'Jawa Timur', 'BALI': 'Bali',
+    'NUSA TENGGARA BARAT': 'Nusa Tenggara Barat', 'NUSA TENGGARA TIMUR': 'Nusa Tenggara Timur',
+    'KALIMANTAN BARAT': 'Kalimantan Barat', 'KALIMANTAN TENGAH': 'Kalimantan Tengah',
+    'KALIMANTAN SELATAN': 'Kalimantan Selatan', 'KALIMANTAN TIMUR': 'Kalimantan Timur',
+    'KALIMANTAN UTARA': 'Kalimantan Utara', 'SULAWESI UTARA': 'Sulawesi Utara',
+    'GORONTALO': 'Gorontalo', 'SULAWESI TENGAH': 'Sulawesi Tengah',
+    'SULAWESI BARAT': 'Sulawesi Barat', 'SULAWESI SELATAN': 'Sulawesi Selatan',
+    'SULAWESI TENGGARA': 'Sulawesi Tenggara', 'MALUKU': 'Maluku',
+    'MALUKU UTARA': 'Maluku Utara', 'PAPUA BARAT': 'Papua Barat', 'PAPUA': 'Papua',
+    'PAPUA SELATAN': 'Papua Selatan', 'PAPUA TENGAH': 'Papua Tengah',
+    'PAPUA PEGUNUNGAN': 'Papua Pegunungan', 'PAPUA BARAT DAYA': 'Papua Barat Daya',
+  };
+
+  async function initMap() {
+    if (leafletMap) return;
+    leafletMap = L.map('map', { zoomControl: true, scrollWheelZoom: false }).setView([-2.5, 118], 5);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+      attribution: '© OpenStreetMap © CARTO', subdomains: 'abcd', maxZoom: 10
+    }).addTo(leafletMap);
+  }
+
+  async function loadMap() {
+    if (window.innerWidth < 1024) return;
+    await initMap();
+
+    const res  = await fetch('/api/map?' + getFilters());
+    mapDataCache = await res.json();
+
+    // Ambil GeoJSON Indonesia
+    const geoRes = await fetch('https://raw.githubusercontent.com/superpikar/indonesia-geojson/master/indonesia-edit.geojson');
+    const geoData = await geoRes.json();
+
+    // Buat lookup dari data
+    const lookup = {};
+    mapDataCache.forEach(d => {
+      const key = (PROV_NAME_MAP[d.provinsi] || d.provinsi).toLowerCase();
+      lookup[key] = d;
+    });
+
+    const values = mapDataCache.map(d => d.lolos_osnp || 0);
+    const maxVal = Math.max(...values, 1);
+
+    function getColor(val) {
+      const t = val / maxVal;
+      if (t > 0.8) return '#1e3a8a';
+      if (t > 0.6) return '#1d4ed8';
+      if (t > 0.4) return '#3b82f6';
+      if (t > 0.2) return '#93c5fd';
+      if (t > 0)   return '#dbeafe';
+      return '#f1f5f9';
+    }
+
+    if (geojsonLayer) geojsonLayer.remove();
+    geojsonLayer = L.geoJSON(geoData, {
+      style: feature => {
+        const name = (feature.properties.state || feature.properties.name || '').toLowerCase();
+        const d = lookup[name] || {};
+        return {
+          fillColor: getColor(d.lolos_osnp || 0),
+          weight: 1, color: '#fff',
+          fillOpacity: 0.85,
+        };
+      },
+      onEachFeature: (feature, layer) => {
+        const name = (feature.properties.state || feature.properties.name || '').toLowerCase();
+        const d = lookup[name] || {};
+        const provLabel = feature.properties.state || feature.properties.name || '—';
+        layer.bindTooltip(`
+          <div style="font-size:12px;min-width:160px;">
+            <div style="font-weight:700;margin-bottom:6px;color:#1e293b;">${provLabel}</div>
+            <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:2px;">
+              <span style="color:#64748b;">Lolos OSP</span>
+              <span style="font-weight:600;">${fmt(d.lolos_osnp)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:2px;">
+              <span style="color:#64748b;">Lolos SF</span>
+              <span style="font-weight:600;">${fmt(d.lolos_osnsf)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:2px;">
+              <span style="color:#64748b;">Lolos Final</span>
+              <span style="font-weight:600;">${fmt(d.lolos_osnf)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;gap:12px;">
+              <span style="color:#64748b;">Medalis</span>
+              <span style="font-weight:600;color:#d97706;">${fmt(d.jadi_medalis)}</span>
+            </div>
+          </div>`, { sticky: true, opacity: 1 });
+      }
+    }).addTo(leafletMap);
+  }
+
+  // ── Apply filters ────────────────────────────────────────────────
+  let debounceTimer;
+  function applyFilters() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      loadSummary();
+      loadFunnel();
+      loadPivot();
+      loadMap();
+    }, 300);
+  }
+
+  function exportPDF() {
+    window.open(`/export/pdf/${currentPivot}?` + getFilters(), '_blank');
+  }
+
+  // ── Init ─────────────────────────────────────────────────────────
+  const yearNow = new Date().getFullYear();
+  const defaultYear = (yearNow - 1).toString();
+  const tahunSelect = document.getElementById('f-tahun');
+  if ([...tahunSelect.options].some(o => o.value === defaultYear)) {
+    tahunSelect.value = defaultYear;
+  }
+  
+  applyFilters();
+</script>
+</body>
 </html>

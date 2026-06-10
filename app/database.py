@@ -144,12 +144,50 @@ def chart_by_bidang(filters):
     conn = get_conn()
     df = pd.read_sql_query(f"""
         SELECT bidang,
+               SUM(lolos_osnp)   AS lolos_osnp,
+               SUM(lolos_osnsf)  AS lolos_osnsf,
+               SUM(lolos_osnf)   AS lolos_osnf,
+               SUM(jadi_medalis) AS jadi_medalis
+        FROM osn_siswa {where}
+        GROUP BY bidang
+        ORDER BY lolos_osnp DESC
+    """, conn, params=params)
+    conn.close()
+    return df
+
+
+def funnel_data(filters):
+    """Data funnel tahapan OSN — filter bidang diabaikan."""
+    # Buat filters tanpa bidang
+    f = {k: v for k, v in filters.items() if k != 'bidang'}
+    where, params = build_where(f)
+    conn = get_conn()
+    row = conn.execute(f"""
+        SELECT
             SUM(lolos_osnp)   AS lolos_osnp,
             SUM(lolos_osnsf)  AS lolos_osnsf,
             SUM(lolos_osnf)   AS lolos_osnf,
             SUM(jadi_medalis) AS jadi_medalis
         FROM osn_siswa {where}
-        GROUP BY bidang
+    """, params).fetchone()
+    conn.close()
+    return dict(row)
+
+
+def map_data(filters):
+    """Data per provinsi untuk peta — filter bidang & kab_kota diabaikan."""
+    f = {k: v for k, v in filters.items() if k not in ['bidang', 'kab_kota']}
+    where, params = build_where(f)
+    conn = get_conn()
+    df = pd.read_sql_query(f"""
+        SELECT
+            provinsi,
+            SUM(lolos_osnp)   AS lolos_osnp,
+            SUM(lolos_osnsf)  AS lolos_osnsf,
+            SUM(lolos_osnf)   AS lolos_osnf,
+            SUM(jadi_medalis) AS jadi_medalis
+        FROM osn_siswa {where}
+        GROUP BY provinsi
         ORDER BY lolos_osnp DESC
     """, conn, params=params)
     conn.close()

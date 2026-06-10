@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, jsonify, send_file
 from app.database import (
     get_filter_options, get_kabkota,
     pivot_provinsi, pivot_kabkota, pivot_sekolah,
-    summary_cards, chart_by_bidang
+    summary_cards, funnel_data, map_data
 )
 from app.export import generate_pdf
 import io
@@ -13,9 +13,9 @@ bp = Blueprint('main', __name__)
 def get_filters():
     return {
         'tahun':    request.args.get('tahun', 'semua'),
-        'kategori':  request.args.get('kategori', 'semua'),   # comma-separated
-        'provinsi': request.args.get('provinsi', 'semua'),  # comma-separated
-        'kab_kota': request.args.get('kab_kota', 'semua'),  # comma-separated
+        'kategori':  request.args.get('kategori', 'semua'),
+        'provinsi': request.args.get('provinsi', 'semua'),
+        'kab_kota': request.args.get('kab_kota', 'semua'),
         'bidang':   request.args.get('bidang', 'semua'),
     }
 
@@ -29,13 +29,11 @@ def index():
 @bp.route('/api/kabkota')
 def api_kabkota():
     provinsi = request.args.get('provinsi')
-    # Support multi-provinsi
     if provinsi and provinsi != 'semua':
         provs = [p for p in provinsi.split(',') if p]
         results = []
         for p in provs:
             results.extend(get_kabkota(p))
-        # Deduplicate sambil preserve order
         seen = set()
         unique = []
         for k in results:
@@ -48,14 +46,17 @@ def api_kabkota():
 
 @bp.route('/api/summary')
 def api_summary():
-    filters = get_filters()
-    return jsonify(summary_cards(filters))
+    return jsonify(summary_cards(get_filters()))
 
 
-@bp.route('/api/chart/bidang')
-def api_chart_bidang():
-    filters = get_filters()
-    df = chart_by_bidang(filters)
+@bp.route('/api/funnel')
+def api_funnel():
+    return jsonify(funnel_data(get_filters()))
+
+
+@bp.route('/api/map')
+def api_map():
+    df = map_data(get_filters())
     return jsonify(df.to_dict(orient='records'))
 
 
@@ -71,6 +72,9 @@ def api_pivot(pivot_type):
     else:
         return jsonify({'error': 'pivot type tidak valid'}), 400
 
+    # Top 5
+    df = df.head(5)
+
     return jsonify({
         'columns': df.columns.tolist(),
         'rows': df.to_dict(orient='records'),
@@ -80,7 +84,6 @@ def api_pivot(pivot_type):
 @bp.route('/export/pdf/<pivot_type>')
 def export_pdf(pivot_type):
     filters = get_filters()
-
     if pivot_type == 'provinsi':
         df = pivot_provinsi(filters)
     elif pivot_type == 'kabkota':
@@ -92,7 +95,6 @@ def export_pdf(pivot_type):
 
     summary = summary_cards(filters)
     pdf_bytes, judul = generate_pdf(filters, pivot_type, df, summary)
-
     filename = judul.replace(' ', '_').replace('—', '-') + '.pdf'
 
     return send_file(
