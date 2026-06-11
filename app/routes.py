@@ -103,3 +103,9 @@ def export_pdf(pivot_type):
         as_attachment=True,
         download_name=filename,
     )
+
+@bp.route('/api/map/kabkota')
+def api_map_kabkota():
+    from app.database import map_data_kabkota
+    df = map_data_kabkota(get_filters())
+    return jsonify(df.to_dict(orient='records'))
