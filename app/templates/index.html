@@ -210,6 +210,12 @@
         text-decoration: underline;
       }
 
+      /* Modal export */
+      .pivot-opt input:checked ~ .pivot-opt-box {
+        border-color: #2563eb;
+        background: #eff6ff;
+      }
+
       /* Funnel */
       .funnel-row {
         display: flex;
@@ -452,6 +458,58 @@
       <!-- Pesan mobile untuk peta -->
       <div class="lg:hidden card p-4 text-center">
         <p class="text-sm text-slate-500">🗺️ Peta interaktif hanya tersedia di desktop / PC</p>
+      </div>
+
+      <!-- Modal Export -->
+      <div id="modal-export" class="fixed inset-0 z-50 hidden items-center justify-center">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeModal()"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 z-10">
+          <h2 class="text-base font-semibold text-slate-800 mb-1">Export PDF</h2>
+          <p class="text-xs text-slate-400 mb-5">Isi detail sebelum mengunduh laporan</p>
+
+          <div class="mb-4">
+            <label class="text-xs font-medium text-slate-600 block mb-1.5">Nama Anda <span class="text-red-400">*</span></label>
+            <input id="export-nama" type="text" placeholder="Masukkan nama lengkap..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <p id="export-nama-err" class="text-xs text-red-400 mt-1 hidden">Nama wajib diisi</p>
+          </div>
+
+          <div class="mb-6">
+            <label class="text-xs font-medium text-slate-600 block mb-2">Tampilkan data berdasarkan</label>
+            <div class="grid grid-cols-3 gap-2">
+              <label class="pivot-opt" data-val="provinsi">
+                <input type="radio" name="export-pivot" value="provinsi" class="hidden" checked />
+                <div class="border-2 border-slate-200 rounded-xl p-3 text-center cursor-pointer transition-all hover:border-blue-300 pivot-opt-box">
+                  <div class="text-lg mb-1">🗺️</div>
+                  <div class="text-xs font-medium text-slate-700">Provinsi</div>
+                </div>
+              </label>
+              <label class="pivot-opt" data-val="kabkota">
+                <input type="radio" name="export-pivot" value="kabkota" class="hidden" />
+                <div class="border-2 border-slate-200 rounded-xl p-3 text-center cursor-pointer transition-all hover:border-blue-300 pivot-opt-box">
+                  <div class="text-lg mb-1">🏙️</div>
+                  <div class="text-xs font-medium text-slate-700">Kab/Kota</div>
+                </div>
+              </label>
+              <label class="pivot-opt" data-val="sekolah">
+                <input type="radio" name="export-pivot" value="sekolah" class="hidden" />
+                <div class="border-2 border-slate-200 rounded-xl p-3 text-center cursor-pointer transition-all hover:border-blue-300 pivot-opt-box">
+                  <div class="text-lg mb-1">🏫</div>
+                  <div class="text-xs font-medium text-slate-700">Sekolah</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="flex gap-3">
+            <button onclick="closeModal()" class="flex-1 border border-slate-200 text-slate-600 text-sm font-medium py-2 rounded-lg hover:bg-slate-50 transition-colors">Batal</button>
+            <button onclick="submitExport()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+              </svg>
+              Download PDF
+            </button>
+          </div>
+        </div>
       </div>
     </main>
 
@@ -945,7 +1003,34 @@
       }
 
       function exportPDF() {
-        window.open(`/export/pdf/${currentPivot}?` + getFilters(), "_blank");
+        document.querySelectorAll('input[name="export-pivot"]').forEach((r) => {
+          r.checked = r.value === currentPivot;
+        });
+        const modal = document.getElementById("modal-export");
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+        document.getElementById("export-nama").focus();
+      }
+
+      function closeModal() {
+        const modal = document.getElementById("modal-export");
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+        document.getElementById("export-nama-err").classList.add("hidden");
+      }
+
+      function submitExport() {
+        const nama = document.getElementById("export-nama").value.trim();
+        if (!nama) {
+          document.getElementById("export-nama-err").classList.remove("hidden");
+          document.getElementById("export-nama").focus();
+          return;
+        }
+        const pivotVal = document.querySelector('input[name="export-pivot"]:checked').value;
+        const params = getFilters();
+        params.set("nama", nama);
+        closeModal();
+        window.open(`/export/pdf/${pivotVal}?` + params, "_blank");
       }
 
       // ── Init ─────────────────────────────────────────────────────────
@@ -955,6 +1040,10 @@
       if ([...tahunSelect.options].some((o) => o.value === defaultYear)) {
         tahunSelect.value = defaultYear;
       }
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeModal();
+      });
 
       applyFilters();
     </script>

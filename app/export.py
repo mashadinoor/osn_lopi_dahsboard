@@ -3,7 +3,6 @@ from weasyprint import HTML
 from datetime import datetime
 from pathlib import Path
 import base64
-import io
 
 
 def get_logo_base64():
@@ -14,15 +13,18 @@ def get_logo_base64():
     return None
 
 
-def generate_pdf(filters, pivot_type, df_pivot, summary):
+def generate_pdf(filters, pivot_type, df_pivot, summary, exported_by='—'):
     kategori  = filters.get('kategori', 'Semua Kategori') or 'Semua Kategori'
     provinsi = filters.get('provinsi', 'Semua Provinsi') or 'Semua Provinsi'
     kab_kota = filters.get('kab_kota', '') or ''
     bidang   = filters.get('bidang', 'Semua Bidang') or 'Semua Bidang'
     tahun    = filters.get('tahun', 'Semua Tahun') or 'Semua Tahun'
 
-    lokasi = kab_kota if kab_kota and kab_kota != 'semua' else provinsi
-    judul  = f'Laporan Prestasi OSN {kategori} — {lokasi} {tahun}'
+    lokasi    = kab_kota if kab_kota and kab_kota != 'semua' else provinsi
+    judul     = f'Laporan Prestasi OSN {kategori} — {lokasi} {tahun}'
+    timestamp = datetime.now().strftime('%d %B %Y, %H:%M WIB')
+    ts_file   = datetime.now().strftime('%Y%m%d_%H%M')
+    filename  = f'Laporan Prestasi OSN {kategori} {tahun} - {exported_by} - {ts_file}'
 
     pivot_labels = {
         'provinsi': 'Provinsi',
@@ -33,7 +35,8 @@ def generate_pdf(filters, pivot_type, df_pivot, summary):
     html_string = render_template(
         'export_pdf.html',
         judul=judul,
-        timestamp=datetime.now().strftime('%d %B %Y, %H:%M WIB'),
+        timestamp=timestamp,
+        exported_by=exported_by,
         filters={
             'Tahun':     tahun,
             'Kategori':  kategori,
@@ -51,4 +54,4 @@ def generate_pdf(filters, pivot_type, df_pivot, summary):
     )
 
     pdf_bytes = HTML(string=html_string, base_url=str(Path(__file__).parent)).write_pdf()
-    return pdf_bytes, judul
+    return pdf_bytes, filename

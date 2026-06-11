@@ -83,6 +83,7 @@ def api_pivot(pivot_type):
 
 @bp.route('/export/pdf/<pivot_type>')
 def export_pdf(pivot_type):
+    exported_by = request.args.get("nama", "—")
     filters = get_filters()
     if pivot_type == 'provinsi':
         df = pivot_provinsi(filters)
@@ -94,8 +95,8 @@ def export_pdf(pivot_type):
         return 'pivot type tidak valid', 400
 
     summary = summary_cards(filters)
-    pdf_bytes, judul = generate_pdf(filters, pivot_type, df, summary)
-    filename = judul.replace(' ', '_').replace('—', '-') + '.pdf'
+    pdf_bytes, filename = generate_pdf(filters, pivot_type, df, summary, exported_by)
+    filename = filename.replace(' ', '_').replace('/', '-') + '.pdf'
 
     return send_file(
         io.BytesIO(pdf_bytes),
@@ -103,9 +104,3 @@ def export_pdf(pivot_type):
         as_attachment=True,
         download_name=filename,
     )
-
-@bp.route('/api/map/kabkota')
-def api_map_kabkota():
-    from app.database import map_data_kabkota
-    df = map_data_kabkota(get_filters())
-    return jsonify(df.to_dict(orient='records'))
