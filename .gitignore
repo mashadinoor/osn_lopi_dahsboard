@@ -7,3 +7,4 @@ __pycache__/
 EOF
 app/static/Provinsi/
 app/static/Kabupaten/
+migrate-to-supabase.py

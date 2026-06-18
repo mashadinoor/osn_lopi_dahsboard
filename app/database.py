@@ -1,38 +1,51 @@
-import sqlite3
+import psycopg2
+import psycopg2.extras
 import pandas as pd
-from pathlib import Path
+import os
 
-DB_PATH = Path(__file__).parent.parent / 'data' / 'osn_dashboard.db'
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
 
 
 def get_conn():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(SUPABASE_URL)
     return conn
+
+
+def get_dict_cursor(conn):
+    return conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
 
 # ── Filter options ──────────────────────────────────────────────
 
 def get_filter_options():
     conn = get_conn()
+    cur = conn.cursor()
     opts = {}
-    opts['tahun']   = [r[0] for r in conn.execute('SELECT DISTINCT tahun   FROM osn_siswa ORDER BY tahun').fetchall()]
-    opts['kategori'] = [r[0] for r in conn.execute('SELECT DISTINCT kategori FROM osn_siswa ORDER BY kategori').fetchall()]
-    opts['provinsi']= [r[0] for r in conn.execute('SELECT DISTINCT provinsi FROM osn_siswa ORDER BY provinsi').fetchall()]
-    opts['bidang']  = [r[0] for r in conn.execute('SELECT DISTINCT bidang  FROM osn_siswa ORDER BY bidang').fetchall()]
+    cur.execute('SELECT DISTINCT tahun FROM osn_siswa ORDER BY tahun')
+    opts['tahun'] = [r[0] for r in cur.fetchall()]
+    cur.execute('SELECT DISTINCT kategori FROM osn_siswa ORDER BY kategori')
+    opts['kategori'] = [r[0] for r in cur.fetchall()]
+    cur.execute('SELECT DISTINCT provinsi FROM osn_siswa ORDER BY provinsi')
+    opts['provinsi'] = [r[0] for r in cur.fetchall()]
+    cur.execute('SELECT DISTINCT bidang FROM osn_siswa ORDER BY bidang')
+    opts['bidang'] = [r[0] for r in cur.fetchall()]
+    cur.close()
     conn.close()
     return opts
 
 
 def get_kabkota(provinsi=None):
     conn = get_conn()
+    cur = conn.cursor()
     if provinsi:
-        rows = conn.execute(
-            'SELECT DISTINCT kab_kota FROM osn_siswa WHERE provinsi = ? ORDER BY kab_kota',
+        cur.execute(
+            'SELECT DISTINCT kab_kota FROM osn_siswa WHERE provinsi = %s ORDER BY kab_kota',
             (provinsi,)
-        ).fetchall()
+        )
     else:
-        rows = conn.execute('SELECT DISTINCT kab_kota FROM osn_siswa ORDER BY kab_kota').fetchall()
+        cur.execute('SELECT DISTINCT kab_kota FROM osn_siswa ORDER BY kab_kota')
+    rows = cur.fetchall()
+    cur.close()
     conn.close()
     return [r[0] for r in rows]
 
@@ -49,7 +62,7 @@ def build_where(filters):
     for col in ['tahun', 'bidang']:
         val = filters.get(col)
         if val and val != 'semua':
-            clauses.append(f'{col} = ?')
+            clauses.append(f'{col} = %s')
             params.append(val)
 
     # Multi-select
@@ -57,19 +70,17 @@ def build_where(filters):
         val = filters.get(col)
         if not val:
             continue
-        # Bisa berupa list atau string tunggal
         if isinstance(val, str):
             val = [v for v in val.split(',') if v and v != 'semua']
         else:
             val = [v for v in val if v and v != 'semua']
         if val:
-            placeholders = ','.join('?' * len(val))
+            placeholders = ','.join(['%s'] * len(val))
             clauses.append(f'{col} IN ({placeholders})')
             params.extend(val)
 
     where = ('WHERE ' + ' AND '.join(clauses)) if clauses else ''
     return where, params
-
 
 
 # ── Pivot queries ────────────────────────────────────────────────
@@ -122,18 +133,22 @@ def pivot_sekolah(filters):
     conn.close()
     return df
 
+
 def summary_cards(filters):
     """Angka ringkasan untuk kartu di atas dashboard."""
     where, params = build_where(filters)
     conn = get_conn()
-    row = conn.execute(f"""
+    cur = get_dict_cursor(conn)
+    cur.execute(f"""
         SELECT
             SUM(lolos_osnp)   AS total_lolos_osnp,
             SUM(lolos_osnsf)  AS total_lolos_osnsf,
             SUM(lolos_osnf)   AS total_lolos_osnf,
             SUM(jadi_medalis) AS total_medalis
         FROM osn_siswa {where}
-    """, params).fetchone()
+    """, params)
+    row = cur.fetchone()
+    cur.close()
     conn.close()
     return dict(row)
 
@@ -158,18 +173,20 @@ def chart_by_bidang(filters):
 
 def funnel_data(filters):
     """Data funnel tahapan OSN — filter bidang diabaikan."""
-    # Buat filters tanpa bidang
     f = {k: v for k, v in filters.items() if k != 'bidang'}
     where, params = build_where(f)
     conn = get_conn()
-    row = conn.execute(f"""
+    cur = get_dict_cursor(conn)
+    cur.execute(f"""
         SELECT
             SUM(lolos_osnp)   AS lolos_osnp,
             SUM(lolos_osnsf)  AS lolos_osnsf,
             SUM(lolos_osnf)   AS lolos_osnf,
             SUM(jadi_medalis) AS jadi_medalis
         FROM osn_siswa {where}
-    """, params).fetchone()
+    """, params)
+    row = cur.fetchone()
+    cur.close()
     conn.close()
     return dict(row)
 
@@ -188,26 +205,6 @@ def map_data(filters):
             SUM(jadi_medalis) AS jadi_medalis
         FROM osn_siswa {where}
         GROUP BY provinsi
-        ORDER BY lolos_osnp DESC
-    """, conn, params=params)
-    conn.close()
-    return df
-
-def map_data_kabkota(filters):
-    """Data per kab/kota untuk peta zoom-in."""
-    f = {k: v for k, v in filters.items() if k not in ['bidang', 'kab_kota']}
-    where, params = build_where(f)
-    conn = get_conn()
-    df = pd.read_sql_query(f"""
-        SELECT
-            provinsi,
-            kab_kota,
-            SUM(lolos_osnp)   AS lolos_osnp,
-            SUM(lolos_osnsf)  AS lolos_osnsf,
-            SUM(lolos_osnf)   AS lolos_osnf,
-            SUM(jadi_medalis) AS jadi_medalis
-        FROM osn_siswa {where}
-        GROUP BY provinsi, kab_kota
         ORDER BY lolos_osnp DESC
     """, conn, params=params)
     conn.close()
