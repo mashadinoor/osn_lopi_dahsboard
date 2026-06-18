@@ -1,47 +1,51 @@
 # 📊 OSN LOPI Dashboard
 
-Dashboard berbasis web untuk manajemen dan visualisasi data **LOPI Prestasi Indonesia** dalam rangka **Olimpiade Sains Nasional (OSN)**. Dibangun dengan Flask dan Python, aplikasi ini memudahkan pengelolaan data peserta, penilaian, serta ekspor laporan secara otomatis.
+Dashboard berbasis web untuk visualisasi dan ekspor data prestasi siswa **OSN (Olimpiade Sains Nasional)** — hasil pengumuman resmi Puspresnas — yang dikelola oleh **LOPI (Lembaga Olimpiade dan Prestasi Indonesia)**. Dibangun dengan Flask, aplikasi ini memudahkan tim marketing dan internal LOPI untuk memfilter, memvisualisasikan, dan mengekspor data pivot tanpa proses manual berulang.
 
 ---
 
 ## ✨ Fitur Utama
 
-- 📋 **Manajemen Data** — Kelola data peserta dan hasil penelitian secara terpusat
-- 📈 **Visualisasi** — Tampilkan data dalam format yang mudah dibaca
-- 📄 **Ekspor PDF** — Generate laporan PDF otomatis menggunakan WeasyPrint
-- 📊 **Import Excel** — Baca dan proses data dari file `.xlsx` menggunakan Pandas & OpenPyXL
-- 🌐 **Antarmuka Web** — Akses via browser, dibangun dengan Flask & Jinja2
+- 🔍 **Filter Multi-Select** — Filter berdasarkan tahun, kategori (SD/SMP/SMA), provinsi, kab/kota, dan bidang studi, dengan pencarian cepat
+- 📊 **Pivot Table** — Top 5 data per provinsi, kab/kota, atau sekolah, dengan rincian jumlah peserta per tahapan OSN (OSP, SF, Final) dan medalis
+- 🔻 **Funnel Chart** — Visualisasi corong tahapan OSN dari OSP hingga Medalis
+- 🗺️ **Peta Interaktif** — Sebaran prestasi per provinsi se-Indonesia (Leaflet.js), warna berdasarkan jumlah lolos OSP
+- 📄 **Ekspor PDF** — Generate laporan PDF terformat (judul, filter aktif, nama pengekspor, timestamp) menggunakan WeasyPrint
+- 🗄️ **Database Cloud** — Data tersimpan di Supabase (PostgreSQL), bukan lagi file lokal — mendukung pertumbuhan data tahunan
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Komponen        | Teknologi      |
-| --------------- | -------------- |
-| Backend         | Python · Flask |
-| Template Engine | Jinja2         |
-| Data Processing | Pandas · NumPy |
-| Excel Support   | OpenPyXL       |
-| PDF Generator   | WeasyPrint     |
-| Gambar          | Pillow         |
+| Komponen        | Teknologi                |
+| --------------- | ------------------------ |
+| Backend         | Python · Flask           |
+| Database        | PostgreSQL (Supabase)    |
+| Template Engine | Jinja2                   |
+| Data Processing | Pandas                   |
+| Peta Interaktif | Leaflet.js + GeoJSON     |
+| Grafik          | Chart.js (custom funnel) |
+| PDF Generator   | WeasyPrint               |
+| Hosting         | Render                   |
 
 ---
 
-## 🚀 Cara Menjalankan
+## 🚀 Cara Menjalankan (Lokal)
 
 ### 1. Clone Repository
 
 ```bash
 git clone https://github.com/mashadinoor/osn_lopi_dahsboard.git
 cd osn_lopi_dahsboard
+git checkout deploy-render
 ```
 
-### 2. Buat Virtual Environment (opsional tapi disarankan)
+### 2. Buat Virtual Environment
 
 ```bash
 python -m venv venv
 source venv/bin/activate        # Linux / macOS
-source venv/Scripts/activate    # Windows
+venv\Scripts\activate           # Windows
 ```
 
 ### 3. Install Dependensi
@@ -50,13 +54,23 @@ source venv/Scripts/activate    # Windows
 pip install -r requirements.txt
 ```
 
-### 4. Jalankan Aplikasi
+### 4. Konfigurasi Environment Variable
+
+Buat file `.env` di root project:
+
+```
+SUPABASE_URL=postgresql://postgres.xxxxx:[PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres
+```
+
+> Ambil connection string dari Supabase Dashboard → Project Settings → Database → Connection string → **Session Pooler**.
+
+### 5. Jalankan Aplikasi
 
 ```bash
 python run.py
 ```
 
-Aplikasi akan berjalan di `http://localhost:5000`
+Aplikasi berjalan di `http://localhost:5000`
 
 ---
 
@@ -64,43 +78,73 @@ Aplikasi akan berjalan di `http://localhost:5000`
 
 ```
 osn_lopi_dahsboard/
-├── app/                  # Package utama aplikasi Flask
-│   ├── __init__.py       # Factory function (create_app)
-│   ├── routes/           # Definisi route/endpoint
-│   ├── templates/        # Template HTML (Jinja2)
-│   └── static/           # Aset statis (CSS, JS, gambar)
-├── run.py                # Entry point aplikasi
-├── requirements.txt      # Daftar dependensi
+├── app/
+│   ├── __init__.py          # Factory function (create_app)
+│   ├── database.py          # Koneksi & query Supabase (PostgreSQL)
+│   ├── routes.py            # Definisi endpoint Flask
+│   ├── export.py            # Generator PDF (WeasyPrint)
+│   ├── templates/
+│   │   ├── index.html       # Dashboard utama
+│   │   └── export_pdf.html  # Template laporan PDF
+│   └── static/
+│       ├── img/logo.png
+│       └── geojson/         # Peta provinsi Indonesia
+├── run.py                   # Entry point lokal
+├── requirements.txt
 └── README.md
 ```
 
 ---
 
-## ⚙️ Konfigurasi
+## 🗄️ Skema Database
 
-Secara default, aplikasi berjalan dalam mode **debug** di `host 0.0.0.0` port `5000`. Konfigurasi ini bisa diubah langsung di `run.py`:
+Tabel `osn_siswa` di Supabase:
 
-```python
-app.run(debug=True, host='0.0.0.0', port=5000)
+| Kolom          | Tipe    | Keterangan                                    |
+| -------------- | ------- | --------------------------------------------- |
+| `tahun`        | INTEGER | Tahun pelaksanaan OSN                         |
+| `kategori`     | TEXT    | SD / SMP / SMA                                |
+| `nama`         | TEXT    | Nama siswa                                    |
+| `npsn`         | TEXT    | NPSN sekolah (tersedia mulai 2025)            |
+| `sekolah`      | TEXT    | Nama sekolah                                  |
+| `kab_kota`     | TEXT    | Kabupaten/Kota                                |
+| `provinsi`     | TEXT    | Provinsi                                      |
+| `bidang`       | TEXT    | Bidang studi (dinormalisasi)                  |
+| `verified`     | INTEGER | 1 = peserta reguler, 0 = peserta undangan     |
+| `lolos_osnp`   | INTEGER | Lolos ke OSN-Provinsi                         |
+| `lolos_osnsf`  | INTEGER | Lolos ke OSN-Semi Final (null jika tidak ada) |
+| `lolos_osnf`   | INTEGER | Lolos ke OSN-Final/Nasional                   |
+| `jadi_medalis` | INTEGER | Mendapat medali                               |
+| `medali`       | TEXT    | Emas / Perak / Perunggu / Honorable           |
+
+> Semua baris merepresentasikan siswa yang telah **lolos OSN-Kabupaten**, karena data Puspresnas baru tersedia mulai dari tahap tersebut.
+
+---
+
+## ⚙️ Konfigurasi Produksi
+
+Start command untuk Render (atau platform lain berbasis Gunicorn):
+
+```
+gunicorn app:app --timeout 120 --workers 1
 ```
 
-> ⚠️ **Catatan:** Untuk deployment produksi, matikan mode debug dan gunakan WSGI server seperti Gunicorn.
+Timeout diperpanjang untuk mengantisipasi ekspor PDF dengan data berjumlah ribuan baris (misal: pivot per sekolah tanpa filter wilayah).
 
 ---
 
 ## 📦 Dependensi Utama
 
 ```
-Flask==3.1.3
-pandas==2.3.3
-openpyxl==3.1.5
-weasyprint==69.0
-numpy==2.2.6
-Jinja2==3.1.6
-Pillow==12.2.0
+Flask
+pandas
+psycopg2-binary
+python-dotenv
+weasyprint
+gunicorn
 ```
 
-Lihat `requirements.txt` untuk daftar lengkap.
+Lihat `requirements.txt` untuk daftar lengkap dan versi pasti.
 
 ---
 
@@ -109,4 +153,5 @@ Lihat `requirements.txt` untuk daftar lengkap.
 **mashadinoor** · [GitHub](https://github.com/mashadinoor)
 
 ---
+
 > Dibuat dengan ❤️ untuk mendukung penyelenggaraan OSN LOPI yang lebih efisien.
