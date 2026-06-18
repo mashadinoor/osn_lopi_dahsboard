@@ -83,6 +83,9 @@ def api_pivot(pivot_type):
 
 @bp.route('/export/pdf/<pivot_type>')
 def export_pdf(pivot_type):
+    import time
+    t0 = time.time()
+
     exported_by = request.args.get("nama", "—")
     filters = get_filters()
     if pivot_type == 'provinsi':
@@ -94,8 +97,18 @@ def export_pdf(pivot_type):
     else:
         return 'pivot type tidak valid', 400
 
+    t1 = time.time()
+    print(f'[TIMING] Query pivot: {t1-t0:.2f}s | {len(df)} baris')
+
     summary = summary_cards(filters)
+    t2 = time.time()
+    print(f'[TIMING] Query summary: {t2-t1:.2f}s')
+
     pdf_bytes, filename = generate_pdf(filters, pivot_type, df, summary, exported_by)
+    t3 = time.time()
+    print(f'[TIMING] Generate PDF: {t3-t2:.2f}s')
+    print(f'[TIMING] TOTAL: {t3-t0:.2f}s')
+
     filename = filename.replace(' ', '_').replace('/', '-') + '.pdf'
 
     return send_file(
