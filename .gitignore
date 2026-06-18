@@ -2,10 +2,9 @@ cat > .gitignore << 'EOF'
 venv/
 __pycache__/
 *.pyc
-*.db
 .env
 .DS_Store
-data/
 EOF
 app/static/Provinsi/
 app/static/Kabupaten/
+migrate-to-supabase.py
