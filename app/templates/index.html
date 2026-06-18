@@ -1019,7 +1019,7 @@
         document.getElementById("export-nama-err").classList.add("hidden");
       }
 
-      function submitExport() {
+      async function submitExport() {
         const nama = document.getElementById("export-nama").value.trim();
         if (!nama) {
           document.getElementById("export-nama-err").classList.remove("hidden");
@@ -1029,8 +1029,56 @@
         const pivotVal = document.querySelector('input[name="export-pivot"]:checked').value;
         const params = getFilters();
         params.set("nama", nama);
-        closeModal();
-        window.open(`/export/pdf/${pivotVal}?` + params, "_blank");
+
+        // Tampilkan state loading
+        showExportStatus("loading", "File sedang diproses...");
+
+        try {
+          const res = await fetch(`/export/pdf/${pivotVal}?` + params);
+          if (!res.ok) throw new Error("Export gagal");
+
+          const blob = await res.blob();
+          const disposition = res.headers.get("Content-Disposition") || "";
+          const match = disposition.match(/filename="?([^"]+)"?/);
+          const filename = match ? match[1] : "laporan.pdf";
+
+          // Trigger download
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+
+          closeModal();
+          showExportStatus("success", "File sudah diunduh");
+        } catch (err) {
+          showExportStatus("error", "Export gagal, coba lagi");
+          console.error(err);
+        }
+      }
+
+      function showExportStatus(type, message) {
+        const existing = document.getElementById("export-toast");
+        if (existing) existing.remove();
+
+        const icons = {
+          loading: '<div class="loader" style="width:18px;height:18px;border-width:2px;"></div>',
+          success: '<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>',
+          error: '<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>',
+        };
+
+        const toast = document.createElement("div");
+        toast.id = "export-toast";
+        toast.className = "fixed bottom-6 right-6 bg-white border border-slate-200 shadow-lg rounded-xl px-4 py-3 flex items-center gap-3 z-50 text-sm text-slate-700";
+        toast.innerHTML = `${icons[type]} <span>${message}</span>`;
+        document.body.appendChild(toast);
+
+        if (type !== "loading") {
+          setTimeout(() => toast.remove(), 3000);
+        }
       }
 
       // ── Init ─────────────────────────────────────────────────────────
