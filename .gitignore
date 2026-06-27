@@ -8,3 +8,6 @@ EOF
 app/static/Provinsi/
 app/static/Kabupaten/
 migrate_to_supabase.py
+append_to_supabase.py
+*.csv
+test.py
