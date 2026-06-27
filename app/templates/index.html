@@ -1082,11 +1082,17 @@
       }
 
       // ── Init ─────────────────────────────────────────────────────────
-      const yearNow = new Date().getFullYear();
-      const defaultYear = (yearNow - 1).toString();
       const tahunSelect = document.getElementById("f-tahun");
-      if ([...tahunSelect.options].some((o) => o.value === defaultYear)) {
-        tahunSelect.value = defaultYear;
+
+      // 1. Ambil semua angka tahun yang benar-benar dicetak ke dalam dropdown
+      const availableYears = Array.from(tahunSelect.options)
+        .map(o => parseInt(o.value))
+        .filter(val => !isNaN(val));
+
+      // 2. Cari angka yang paling besar (tahun terbaru)
+      if (availableYears.length > 0) {
+        const latestYear = Math.max(...availableYears);
+        tahunSelect.value = latestYear.toString();
       }
 
       document.addEventListener("keydown", (e) => {
