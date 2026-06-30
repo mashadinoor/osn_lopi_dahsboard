@@ -53,19 +53,14 @@ def get_kabkota(provinsi=None):
 # ── Query builder ────────────────────────────────────────────────
 
 def build_where(filters):
-    """Bangun klausa WHERE dan params dari dict filter.
-    Mendukung multi-value (list) untuk kategori, provinsi, kab_kota.
-    """
     clauses, params = [], []
 
-    # Single-select
     for col in ['tahun', 'bidang']:
         val = filters.get(col)
         if val and val != 'semua':
             clauses.append(f'{col} = %s')
             params.append(val)
 
-    # Multi-select
     for col in ['kategori', 'provinsi', 'kab_kota']:
         val = filters.get(col)
         if not val:
@@ -135,7 +130,6 @@ def pivot_sekolah(filters):
 
 
 def summary_cards(filters):
-    """Angka ringkasan untuk kartu di atas dashboard."""
     where, params = build_where(filters)
     conn = get_conn()
     cur = get_dict_cursor(conn)
@@ -154,7 +148,6 @@ def summary_cards(filters):
 
 
 def chart_by_bidang(filters):
-    """Data untuk grafik batang per bidang."""
     where, params = build_where(filters)
     conn = get_conn()
     df = pd.read_sql_query(f"""
@@ -172,7 +165,6 @@ def chart_by_bidang(filters):
 
 
 def funnel_data(filters):
-    """Data funnel tahapan OSN — filter bidang diabaikan."""
     f = {k: v for k, v in filters.items() if k != 'bidang'}
     where, params = build_where(f)
     conn = get_conn()
@@ -192,7 +184,6 @@ def funnel_data(filters):
 
 
 def map_data(filters):
-    """Data per provinsi untuk peta — filter bidang & kab_kota diabaikan."""
     f = {k: v for k, v in filters.items() if k not in ['bidang', 'kab_kota']}
     where, params = build_where(f)
     conn = get_conn()
@@ -209,3 +200,91 @@ def map_data(filters):
     """, conn, params=params)
     conn.close()
     return df
+
+def map_data_kabkota(filters):
+    f = {k: v for k, v in filters.items() if k not in ['bidang', 'kab_kota']}
+    where, params = build_where(f)
+    conn = get_conn()
+    df = pd.read_sql_query(f"""
+        SELECT
+            provinsi,
+            kab_kota,
+            SUM(lolos_osnp)   AS lolos_osnp,
+            SUM(lolos_osnsf)  AS lolos_osnsf,
+            SUM(lolos_osnf)   AS lolos_osnf,
+            SUM(jadi_medalis) AS jadi_medalis
+        FROM osn_siswa {where}
+        GROUP BY provinsi, kab_kota
+        ORDER BY lolos_osnp DESC
+    """, conn, params=params)
+    conn.close()
+    return df
+
+def pivot_by_bidang(filters, pivot_type, tahapan_col):
+    """
+    Pivot Mode B: Bidang sebagai kolom, wilayah sebagai baris.
+    Value sel = jumlah siswa pada tahapan OSN tertentu (tahapan_col).
+    tahapan_col: salah satu dari 'lolos_osnp', 'lolos_osnsf', 'lolos_osnf', 'jadi_medalis'
+    pivot_type: 'provinsi', 'kabkota', atau 'sekolah'
+    Semua wilayah ditampilkan (tidak dibatasi top 5).
+    """
+    valid_cols = {'lolos_osnp', 'lolos_osnsf', 'lolos_osnf', 'jadi_medalis'}
+    if tahapan_col not in valid_cols:
+        raise ValueError(f'tahapan_col tidak valid: {tahapan_col}')
+
+    where, params = build_where(filters)
+    conn = get_conn()
+
+    if pivot_type == 'provinsi':
+        group_cols = ['provinsi']
+    elif pivot_type == 'kabkota':
+        group_cols = ['provinsi', 'kab_kota']
+    elif pivot_type == 'sekolah':
+        group_cols = ['provinsi', 'kab_kota', 'sekolah']
+    else:
+        raise ValueError(f'pivot_type tidak valid: {pivot_type}')
+
+    select_cols = ', '.join(group_cols)
+
+    df = pd.read_sql_query(f"""
+        SELECT {select_cols}, bidang,
+               SUM({tahapan_col}) AS nilai
+        FROM osn_siswa {where}
+        GROUP BY {select_cols}, bidang
+    """, conn, params=params)
+
+    conn.close()
+
+    if df.empty:
+        return {'group_cols': group_cols, 'bidang_list': [], 'rows': []}
+
+    # Pivot: baris = wilayah (group_cols), kolom = bidang
+    pivot = df.pivot_table(
+        index=group_cols, columns='bidang', values='nilai',
+        aggfunc='sum', fill_value=0
+    )
+
+    bidang_list = sorted(pivot.columns.tolist())
+    pivot = pivot[bidang_list]
+
+    # Tambah kolom total
+    pivot['Total'] = pivot.sum(axis=1)
+
+    # Urutkan berdasarkan Total descending
+    pivot = pivot.sort_values('Total', ascending=False)
+
+    rows = []
+    for idx, row in pivot.iterrows():
+        if len(group_cols) == 1:
+            idx = (idx,)
+        row_dict = dict(zip(group_cols, idx))
+        for b in bidang_list:
+            row_dict[b] = int(row[b])
+        row_dict['Total'] = int(row['Total'])
+        rows.append(row_dict)
+
+    return {
+        'group_cols': group_cols,
+        'bidang_list': bidang_list,
+        'rows': rows,
+    }

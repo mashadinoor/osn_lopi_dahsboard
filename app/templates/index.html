@@ -10,6 +10,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
       body {
+        margin: 0;
         font-family: "Inter", system-ui, sans-serif;
         background: #f8fafc;
       }
@@ -272,6 +273,11 @@
         border-radius: 3px;
         flex-shrink: 0;
       }
+
+      .export-mode-opt input:checked ~ .export-mode-box {
+        border-color: #2563eb;
+        background: #eff6ff;
+      }
     </style>
   </head>
   <body class="min-h-screen">
@@ -295,9 +301,18 @@
       <div class="card p-4">
         <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Filter</p>
         <div class="flex flex-wrap gap-3">
-          <div class="flex flex-col gap-1 min-w-[110px] flex-1">
+          <div class="flex flex-col gap-1 min-w-[110px]">
             <label class="text-xs text-slate-500">Tahun</label>
-            <select id="f-tahun" onchange="applyFilters()" class="border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white">
+            <select
+              id="f-tahun"
+              onchange="applyFilters()"
+              class="border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white bg-no-repeat"
+              style="
+                background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 12 12%27%3E%3Cpath fill=%27%236b7280%27 d=%27M6 8L1 3h10z%27/%3E%3C/svg%3E&quot;);
+                background-position: right 10px center;
+                padding-right: 28px;
+              "
+            >
               <option value="semua">Semua Tahun</option>
               {% for t in opts.tahun %}
               <option value="{{ t }}">{{ t }}</option>
@@ -305,7 +320,7 @@
             </select>
           </div>
 
-          <div class="flex flex-col gap-1 min-w-[130px] flex-1">
+          <div class="flex flex-col gap-1 min-w-[130px]">
             <label class="text-xs text-slate-500">Kategori</label>
             <div class="ms-wrap" id="ms-kategori">
               <div class="ms-trigger" onclick="toggleDropdown('kategori')">
@@ -327,7 +342,7 @@
             </div>
           </div>
 
-          <div class="flex flex-col gap-1 min-w-[170px] flex-2">
+          <div class="flex flex-col gap-1 min-w-[170px] flex-1">
             <label class="text-xs text-slate-500">Provinsi</label>
             <div class="ms-wrap" id="ms-provinsi">
               <div class="ms-trigger" onclick="toggleDropdown('provinsi')">
@@ -349,7 +364,7 @@
             </div>
           </div>
 
-          <div class="flex flex-col gap-1 min-w-[170px] flex-2">
+          <div class="flex flex-col gap-1 min-w-[170px] flex-1">
             <label class="text-xs text-slate-500">Kab/Kota</label>
             <div class="ms-wrap" id="ms-kabkota">
               <div class="ms-trigger" onclick="toggleDropdown('kabkota')">
@@ -367,7 +382,8 @@
             </div>
           </div>
 
-          <div class="flex flex-col gap-1 min-w-[140px] flex-1">
+          <!-- Bidang (single) - hidden di dashboard, tetap ada di DOM untuk export modal -->
+          <div class="hidden flex-col gap-1 min-w-[140px]">
             <label class="text-xs text-slate-500">Bidang</label>
             <select id="f-bidang" onchange="applyFilters()" class="border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white">
               <option value="semua">Semua Bidang</option>
@@ -461,7 +477,7 @@
       </div>
 
       <!-- Modal Export -->
-      <div id="modal-export" class="fixed inset-0 z-50 hidden items-center justify-center">
+      <div id="modal-export" class="fixed inset-0 z-50 hidden items-center justify-center" style="margin: 0 !important; top: 0 !important">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeModal()"></div>
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 z-10">
           <h2 class="text-base font-semibold text-slate-800 mb-1">Export PDF</h2>
@@ -498,6 +514,38 @@
                 </div>
               </label>
             </div>
+          </div>
+
+          <!-- Mode Export -->
+          <div class="mb-4">
+            <label class="text-xs font-medium text-slate-600 block mb-2">Tipe Export</label>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="export-mode-opt" data-val="tahapan">
+                <input type="radio" name="export-mode" value="tahapan" class="hidden" checked onchange="toggleBidangOption('tahapan')" />
+                <div class="border-2 border-slate-200 rounded-xl p-2.5 text-center cursor-pointer transition-all hover:border-blue-300 export-mode-box">
+                  <div class="text-xs font-medium text-slate-700">Berdasarkan Tahapan OSN</div>
+                  <div class="text-[10px] text-slate-400 mt-0.5">OSP, SF, F, Medalis</div>
+                </div>
+              </label>
+              <label class="export-mode-opt" data-val="bidang">
+                <input type="radio" name="export-mode" value="bidang" class="hidden" onchange="toggleBidangOption('bidang')" />
+                <div class="border-2 border-slate-200 rounded-xl p-2.5 text-center cursor-pointer transition-all hover:border-blue-300 export-mode-box">
+                  <div class="text-xs font-medium text-slate-700">Berdasarkan Bidang</div>
+                  <div class="text-[10px] text-slate-400 mt-0.5">Matematika, Fisika, dst</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Pilihan tahapan, wajib kalau mode = bidang -->
+          <div id="tahapan-select-wrap" class="mb-4 hidden">
+            <label class="text-xs font-medium text-slate-600 block mb-1.5">Pilih Tahapan <span class="text-red-400">*</span></label>
+            <select id="export-tahapan-col" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="lolos_osnp">Lolos OSP</option>
+              <option value="lolos_osnsf">Lolos OSN-SF</option>
+              <option value="lolos_osnf">Lolos OSN-F</option>
+              <option value="jadi_medalis">Medalis</option>
+            </select>
           </div>
 
           <div class="flex gap-3">
@@ -559,11 +607,18 @@
       function renderTags(name) {
         const container = document.getElementById("tags-" + name);
         const set = msState[name];
-        const labels = { kategori: "Semua Kategori", provinsi: "Semua Provinsi", kabkota: "Semua Kab/Kota" };
-        if (set.size === 0) {
+        const labels = { jenjang: "Semua Kategori", provinsi: "Semua Provinsi", kabkota: "Semua Kab/Kota" };
+        const arr = [...set];
+
+        if (arr.length === 0) {
           container.innerHTML = `<span class="ms-placeholder">${labels[name]}</span>`;
+        } else if (arr.length <= 2) {
+          container.innerHTML = arr.map((v) => `<span class="ms-tag">${v} <span class="rm" onclick="event.stopPropagation();removeTag('${name}','${v.replace(/'/g, "\\'")}')">×</span></span>`).join("");
         } else {
-          container.innerHTML = [...set].map((v) => `<span class="ms-tag">${v} <span class="rm" onclick="event.stopPropagation();removeTag('${name}','${v.replace(/'/g, "\\'")}')">×</span></span>`).join("");
+          const first = arr[0];
+          const rest = arr.length - 1;
+          container.innerHTML = `<span class="ms-tag">${first} <span class="rm" onclick="event.stopPropagation();removeTag('${name}','${first.replace(/'/g, "\\'")}')">×</span></span>
+        <span class="ms-tag" style="background:#e2e8f0;color:#475569;">dan ${rest} lainnya</span>`;
         }
       }
 
@@ -656,9 +711,25 @@
       async function loadSummary() {
         const res = await fetch("/api/summary?" + getFilters());
         const data = await res.json();
-        ["total_lolos_osnp", "total_lolos_osnsf", "total_lolos_osnf", "total_medalis"].forEach((k) => {
+        const labels = {
+          total_lolos_osnp: { full: true }, // OSP tetap tampil angka meski 0
+          total_lolos_osnsf: { full: false },
+          total_lolos_osnf: { full: false },
+          total_medalis: { full: false },
+        };
+        Object.keys(labels).forEach((k) => {
           const el = document.getElementById("card-" + k);
-          if (el) el.textContent = fmt(data[k]);
+          if (!el) return;
+          const val = data[k];
+          if (!labels[k].full && (!val || val === 0)) {
+            el.textContent = "Belum ada Data";
+            el.classList.add("text-2xl");
+            el.classList.remove("text-2xl");
+          } else {
+            el.textContent = fmt(val);
+            el.classList.add("text-2xl");
+            el.classList.remove("text-2xl");
+          }
         });
       }
 
@@ -830,22 +901,19 @@
         }).addTo(leafletMap);
 
         // Load kedua GeoJSON sekali saja
-        const [rProv, rKab] = await Promise.all([
-          fetch("/static/geojson/indonesia_provinsi.geojson"),
-          // fetch("/static/geojson/indonesia_kabupaten.geojson")
-        ]);
+        const [rProv, rKab] = await Promise.all([fetch("/static/geojson/indonesia_provinsi.geojson"), fetch("/static/geojson/indonesia_kabupaten.geojson")]);
         geoProvinsi = await rProv.json();
-        // geoKabupaten = await rKab.json();
+        geoKabupaten = await rKab.json();
 
         // Switch layer saat zoom berubah
-        // leafletMap.on("zoomend", () => {
-        //   const z = leafletMap.getZoom();
-        //   const mode = z >= ZOOM_THRESHOLD ? "kabupaten" : "provinsi";
-        //   if (mode !== currentMapMode) {
-        //     currentMapMode = mode;
-        //     renderMapLayer();
-        //   }
-        // });
+        leafletMap.on("zoomend", () => {
+          const z = leafletMap.getZoom();
+          const mode = z >= ZOOM_THRESHOLD ? "kabupaten" : "provinsi";
+          if (mode !== currentMapMode) {
+            currentMapMode = mode;
+            renderMapLayer();
+          }
+        });
       }
 
       function buildLookup(data, keyField) {
@@ -980,13 +1048,8 @@
         mapDataCache = await resProv.json();
 
         // Kabupaten di-hold dulu
-        // const resKab = await fetch('/api/map/kabkota?' + getFilters());
-        // mapKabCache  = await resKab.json();
-
-        // Load data provinsi dan kabupaten sekaligus
-        // const [resProv, resKab] = await Promise.all([fetch("/api/map?" + getFilters()), fetch("/api/map/kabkota?" + getFilters())]);
-        // mapDataCache = await resProv.json();
-        // mapKabCache = await resKab.json();
+        const resKab = await fetch("/api/map/kabkota?" + getFilters());
+        mapKabCache = await resKab.json();
 
         renderMapLayer();
       }
@@ -1029,6 +1092,12 @@
         const pivotVal = document.querySelector('input[name="export-pivot"]:checked').value;
         const params = getFilters();
         params.set("nama", nama);
+
+        const exportMode = document.querySelector('input[name="export-mode"]:checked').value;
+        params.set("export_mode", exportMode);
+        if (exportMode === "bidang") {
+          params.set("tahapan_col", document.getElementById("export-tahapan-col").value);
+        }
 
         // Tampilkan state loading
         showExportStatus("loading", "File sedang diproses...");
@@ -1081,13 +1150,17 @@
         }
       }
 
+      function toggleBidangOption(mode) {
+        document.getElementById("tahapan-select-wrap").classList.toggle("hidden", mode !== "bidang");
+      }
+
       // ── Init ─────────────────────────────────────────────────────────
       const tahunSelect = document.getElementById("f-tahun");
 
       // 1. Ambil semua angka tahun yang benar-benar dicetak ke dalam dropdown
       const availableYears = Array.from(tahunSelect.options)
-        .map(o => parseInt(o.value))
-        .filter(val => !isNaN(val));
+        .map((o) => parseInt(o.value))
+        .filter((val) => !isNaN(val));
 
       // 2. Cari angka yang paling besar (tahun terbaru)
       if (availableYears.length > 0) {

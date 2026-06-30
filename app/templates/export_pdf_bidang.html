@@ -16,7 +16,6 @@
         background: white;
       }
 
-      /* ── Page layout ── */
       @page {
         size: A4 landscape;
         margin: 1.5cm 1.8cm;
@@ -27,7 +26,6 @@
         }
       }
 
-      /* ── Header ── */
       .header {
         display: flex;
         align-items: flex-start;
@@ -36,13 +34,11 @@
         padding-bottom: 10px;
         margin-bottom: 14px;
       }
-
       .header-left {
         display: flex;
         align-items: center;
         gap: 10px;
       }
-
       .logo-box {
         width: 36px;
         height: 36px;
@@ -55,7 +51,6 @@
         font-weight: 700;
         font-size: 14px;
       }
-
       .org-name {
         font-size: 11px;
         font-weight: 700;
@@ -66,7 +61,6 @@
         color: #64748b;
         margin-top: 1px;
       }
-
       .header-right {
         text-align: right;
       }
@@ -81,14 +75,12 @@
         margin-top: 3px;
       }
 
-      /* ── Filter info ── */
       .filter-bar {
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
         margin-bottom: 14px;
       }
-
       .filter-chip {
         background: #f1f5f9;
         border: 1px solid #e2e8f0;
@@ -97,88 +89,15 @@
         font-size: 8px;
         color: #475569;
       }
-
       .filter-chip strong {
         color: #1e293b;
       }
-
-      /* ── Summary cards ── */
-      .cards {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 16px;
-      }
-
-      .card {
-        flex: 1;
-        border-radius: 8px;
-        padding: 8px 10px;
-        border: 1px solid #e2e8f0;
-      }
-
-      .card-label {
-        font-size: 7.5px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-        margin-bottom: 2px;
-      }
-      .card-value {
-        font-size: 18px;
-        font-weight: 700;
-      }
-
-      .card-osk {
-        background: #f8fafc;
-      }
-      .card-osk .card-label {
-        color: #64748b;
-      }
-      .card-osk .card-value {
-        color: #1e293b;
-      }
-
-      .card-osnp {
-        background: #eff6ff;
-      }
-      .card-osnp .card-label {
-        color: #2563eb;
-      }
-      .card-osnp .card-value {
+      .filter-chip.highlight {
+        background: #dbeafe;
+        border-color: #93c5fd;
         color: #1d4ed8;
       }
 
-      .card-osnsf {
-        background: #f5f3ff;
-      }
-      .card-osnsf .card-label {
-        color: #7c3aed;
-      }
-      .card-osnsf .card-value {
-        color: #6d28d9;
-      }
-
-      .card-osnf {
-        background: #eef2ff;
-      }
-      .card-osnf .card-label {
-        color: #4338ca;
-      }
-      .card-osnf .card-value {
-        color: #3730a3;
-      }
-
-      .card-medalis {
-        background: #fffbeb;
-      }
-      .card-medalis .card-label {
-        color: #d97706;
-      }
-      .card-medalis .card-value {
-        color: #b45309;
-      }
-
-      /* ── Table ── */
       .section-title {
         font-size: 9px;
         font-weight: 700;
@@ -187,24 +106,29 @@
         letter-spacing: 0.5px;
         margin-bottom: 6px;
       }
+      .section-sub {
+        font-size: 8px;
+        color: #94a3b8;
+        margin-bottom: 10px;
+        margin-top: -4px;
+      }
 
       table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 9px;
+        font-size: 8.5px;
       }
 
       thead th {
         background: #1e293b;
         color: white;
         font-weight: 600;
-        padding: 5px 8px;
-        text-align: left;
+        padding: 5px 6px;
+        text-align: center;
         white-space: nowrap;
       }
-
-      thead th.num {
-        text-align: right;
+      thead th.label-col {
+        text-align: left;
       }
 
       tbody tr:nth-child(even) td {
@@ -213,25 +137,38 @@
       tbody tr:nth-child(odd) td {
         background: white;
       }
-
       tbody td {
-        padding: 4px 8px;
+        padding: 4px 6px;
         border-bottom: 1px solid #f1f5f9;
         color: #334155;
-      }
-
-      tbody td.num {
-        text-align: right;
+        text-align: center;
         font-variant-numeric: tabular-nums;
-        color: #1e293b;
-        font-weight: 500;
+        white-space: nowrap;
       }
-
+      tbody td.label-col {
+        text-align: left;
+      }
       tbody td.zero {
         color: #cbd5e1;
       }
+      tbody td.total-col {
+        font-weight: 700;
+        color: #1d4ed8;
+        background: #eff6ff !important;
+      }
 
-      /* ── Footer ── */
+      tfoot td {
+        padding: 5px 6px;
+        border-top: 2px solid #1e293b;
+        font-weight: 700;
+        text-align: center;
+        background: #f1f5f9 !important;
+        color: #1e293b;
+      }
+      tfoot td.label-col {
+        text-align: left;
+      }
+
       .footer {
         margin-top: 16px;
         padding-top: 8px;
@@ -244,10 +181,8 @@
     </style>
   </head>
   <body>
-    <!-- Header -->
     <div class="header">
       <div class="header-left">
-        <!-- JADI ini -->
         {% if logo_b64 %}
         <img src="data:image/png;base64,{{ logo_b64 }}" style="height: 40px; width: auto" />
         {% else %}
@@ -255,7 +190,7 @@
         {% endif %}
         <div>
           <div class="org-name">LOPI Prestasi Indonesia</div>
-          <div class="org-sub">“Menjadi Lembaga Pionir dalam Mengembangkan Pendidikan Sains Berstandar Olimpiade”</div>
+          <div class="org-sub">"Menjadi Lembaga Pionir dalam Mengembangkan Pendidikan Sains Berstandar Olimpiade"</div>
         </div>
       </div>
       <div class="header-right">
@@ -264,63 +199,54 @@
       </div>
     </div>
 
-    <!-- Filter chips -->
     <div class="filter-bar">
       {% for label, val in filters.items() %}
       <div class="filter-chip"><strong>{{ label }}:</strong> {{ val }}</div>
       {% endfor %}
+      <div class="filter-chip highlight"><strong>Tahapan:</strong> {{ tahapan_label }}</div>
     </div>
 
-    <!-- Summary cards -->
-    <div class="cards">
-      <div class="card card-osnp">
-        <div class="card-label">Lolos OSP</div>
-        <div class="card-value">{{ "{:,}".format(summary.total_lolos_osnp or 0).replace(',', '.') }}</div>
-      </div>
-      <div class="card card-osnsf">
-        <div class="card-label">Lolos OSN-SF</div>
-        <div class="card-value">{{ "{:,}".format(summary.total_lolos_osnsf or 0).replace(',', '.') }}</div>
-      </div>
-      <div class="card card-osnf">
-        <div class="card-label">Lolos OSN-F</div>
-        <div class="card-value">{{ "{:,}".format(summary.total_lolos_osnf or 0).replace(',', '.') }}</div>
-      </div>
-      <div class="card card-medalis">
-        <div class="card-label">Medalis</div>
-        <div class="card-value">{{ "{:,}".format(summary.total_medalis or 0).replace(',', '.') }}</div>
-      </div>
-    </div>
+    <div class="section-title">Rincian per {{ pivot_label }} — Berdasarkan Bidang</div>
+    <div class="section-sub">Angka menunjukkan jumlah siswa pada tahapan {{ tahapan_label }} untuk setiap bidang</div>
 
-    <!-- Pivot table -->
-    <div class="section-title">Rincian per {{ pivot_label }}</div>
-
-    {% set NUM = ['lolos_osnp','lolos_osnsf','lolos_osnf','jadi_medalis'] %} {% set COL_LABELS = { 'provinsi': 'Provinsi', 'kategori': 'Kategori', 'kab_kota': 'Kab/Kota', 'sekolah': 'Sekolah', 'npsn': 'NPSN', 'lolos_osk': 'Lolos OSK', 'lolos_osnp': 'Lolos OSP', 'lolos_osnsf': 'Lolos OSN-SF',
-    'lolos_osnf': 'Lolos OSN-F', 'jadi_medalis':'Medalis', } %}
+    {% set GROUP_LABELS = {'provinsi': 'Provinsi', 'kab_kota': 'Kab/Kota', 'sekolah': 'Sekolah'} %}
 
     <table>
       <thead>
         <tr>
           <th style="width: 24px">#</th>
-          {% for col in columns %} {% if (col != 'provinsi' or show_provinsi_col) and col != 'kategori' %}
-          <th class="{{ 'num' if col in NUM else '' }}">{{ COL_LABELS.get(col, col) }}</th>
-          {% endif %} {% endfor %}
+          {% for gc in group_cols %}
+          <th class="label-col">{{ GROUP_LABELS.get(gc, gc) }}</th>
+          {% endfor %} {% for b in bidang_list %}
+          <th>{{ b }}</th>
+          {% endfor %}
+          <th>Total</th>
         </tr>
       </thead>
       <tbody>
         {% for row in rows %}
         <tr>
           <td style="color: #94a3b8">{{ loop.index }}</td>
-          {% for col in columns %} {% if (col != 'provinsi' or show_provinsi_col) and col != 'kategori' %} {% if col in NUM %} {% set v = row[col] %}
-          <td class="num {{ 'zero' if not v }}">{{ "{:,}".format(v | int).replace(',', '.') if v else '—' }}</td>
-          {% else %}
-          <td>{{ row[col] or '—' }}</td>
-          {% endif %} {% endif %} {% endfor %}
+          {% for gc in group_cols %}
+          <td class="label-col">{{ row[gc] or '—' }}</td>
+          {% endfor %} {% for b in bidang_list %} {% set v = row[b] %}
+          <td class="{{ 'zero' if not v }}">{{ v if v else '—' }}</td>
+          {% endfor %}
+          <td class="total-col">{{ row['Total'] }}</td>
         </tr>
         {% endfor %}
       </tbody>
+      <tfoot>
+        <tr>
+          <td class="label-col" colspan="{{ group_cols|length + 1 }}">Total</td>
+          {% for b in bidang_list %} {% set col_total = rows | sum(attribute=b) %}
+          <td>{{ col_total if col_total else '—' }}</td>
+          {% endfor %} {% set grand_total = rows | sum(attribute='Total') %}
+          <td class="total-col">{{ grand_total }}</td>
+        </tr>
+      </tfoot>
     </table>
 
-    <!-- Footer -->
     <div class="footer">
       <span>LOPI — Data bersumber dari pengumuman resmi Puspresnas</span>
       <span>Export by: {{ exported_by }} at {{ timestamp }}</span>
