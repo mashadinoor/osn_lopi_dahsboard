@@ -277,12 +277,10 @@
         <div class="card-label">Lolos OSP</div>
         <div class="card-value">{{ "{:,}".format(summary.total_lolos_osnp or 0).replace(',', '.') }}</div>
       </div>
-      {% if has_osnsf %}
       <div class="card card-osnsf">
         <div class="card-label">Lolos OSN-SF</div>
         <div class="card-value">{{ "{:,}".format(summary.total_lolos_osnsf or 0).replace(',', '.') }}</div>
       </div>
-      {% endif %}
       <div class="card card-osnf">
         <div class="card-label">Lolos OSN-F</div>
         <div class="card-value">{{ "{:,}".format(summary.total_lolos_osnf or 0).replace(',', '.') }}</div>
@@ -296,14 +294,14 @@
     <!-- Pivot table -->
     <div class="section-title">Rincian per {{ pivot_label }}</div>
 
-    {% set NUM = ['lolos_osnp','lolos_osnsf','lolos_osnf','jadi_medalis'] %} {% set COL_LABELS = { 'provinsi': 'Provinsi', 'kab_kota': 'Kab/Kota', 'sekolah': 'Sekolah', 'npsn': 'NPSN', 'lolos_osk': 'Lolos OSK', 'lolos_osnp': 'Lolos OSP', 'lolos_osnsf': 'Lolos OSN-SF', 'lolos_osnf': 'Lolos OSN-F',
-    'jadi_medalis':'Medalis', } %}
+    {% set NUM = ['lolos_osnp','lolos_osnsf','lolos_osnf','jadi_medalis'] %} {% set COL_LABELS = { 'provinsi': 'Provinsi', 'kategori': 'Kategori', 'kab_kota': 'Kab/Kota', 'sekolah': 'Sekolah', 'npsn': 'NPSN', 'lolos_osk': 'Lolos OSK', 'lolos_osnp': 'Lolos OSP', 'lolos_osnsf': 'Lolos OSN-SF',
+    'lolos_osnf': 'Lolos OSN-F', 'jadi_medalis':'Medalis', } %}
 
     <table>
       <thead>
         <tr>
           <th style="width: 24px">#</th>
-          {% for col in columns %} {% if col != 'lolos_osnsf' or has_osnsf %}
+          {% for col in columns %} {% if col not in ['provinsi', 'kategori'] %}
           <th class="{{ 'num' if col in NUM else '' }}">{{ COL_LABELS.get(col, col) }}</th>
           {% endif %} {% endfor %}
         </tr>
@@ -312,7 +310,7 @@
         {% for row in rows %}
         <tr>
           <td style="color: #94a3b8">{{ loop.index }}</td>
-          {% for col in columns %} {% if col != 'lolos_osnsf' or has_osnsf %} {% if col in NUM %} {% set v = row[col] %}
+          {% for col in columns %} {% if col not in ['provinsi', 'kategori'] %} {% if col in NUM %} {% set v = row[col] %}
           <td class="num {{ 'zero' if not v }}">{{ "{:,}".format(v | int).replace(',', '.') if v else '—' }}</td>
           {% else %}
           <td>{{ row[col] or '—' }}</td>
