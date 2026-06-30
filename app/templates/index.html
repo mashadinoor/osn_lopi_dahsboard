@@ -10,6 +10,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
       body {
+        margin: 0;
         font-family: "Inter", system-ui, sans-serif;
         background: #f8fafc;
       }
@@ -272,6 +273,11 @@
         border-radius: 3px;
         flex-shrink: 0;
       }
+
+      .export-mode-opt input:checked ~ .export-mode-box {
+        border-color: #2563eb;
+        background: #eff6ff;
+      }
     </style>
   </head>
   <body class="min-h-screen">
@@ -461,7 +467,7 @@
       </div>
 
       <!-- Modal Export -->
-      <div id="modal-export" class="fixed inset-0 z-50 hidden items-center justify-center">
+      <div id="modal-export" class="fixed inset-0 z-50 hidden items-center justify-center" style="margin: 0 !important; top: 0 !important">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeModal()"></div>
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 z-10">
           <h2 class="text-base font-semibold text-slate-800 mb-1">Export PDF</h2>
@@ -498,6 +504,38 @@
                 </div>
               </label>
             </div>
+          </div>
+
+          <!-- Mode Export -->
+          <div class="mb-4">
+            <label class="text-xs font-medium text-slate-600 block mb-2">Tipe Export</label>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="export-mode-opt" data-val="tahapan">
+                <input type="radio" name="export-mode" value="tahapan" class="hidden" checked onchange="toggleBidangOption('tahapan')" />
+                <div class="border-2 border-slate-200 rounded-xl p-2.5 text-center cursor-pointer transition-all hover:border-blue-300 export-mode-box">
+                  <div class="text-xs font-medium text-slate-700">Berdasarkan Tahapan OSN</div>
+                  <div class="text-[10px] text-slate-400 mt-0.5">OSP, SF, F, Medalis</div>
+                </div>
+              </label>
+              <label class="export-mode-opt" data-val="bidang">
+                <input type="radio" name="export-mode" value="bidang" class="hidden" onchange="toggleBidangOption('bidang')" />
+                <div class="border-2 border-slate-200 rounded-xl p-2.5 text-center cursor-pointer transition-all hover:border-blue-300 export-mode-box">
+                  <div class="text-xs font-medium text-slate-700">Berdasarkan Bidang</div>
+                  <div class="text-[10px] text-slate-400 mt-0.5">Matematika, Fisika, dst</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Pilihan tahapan, wajib kalau mode = bidang -->
+          <div id="tahapan-select-wrap" class="mb-4 hidden">
+            <label class="text-xs font-medium text-slate-600 block mb-1.5">Pilih Tahapan <span class="text-red-400">*</span></label>
+            <select id="export-tahapan-col" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="lolos_osnp">Lolos OSP</option>
+              <option value="lolos_osnsf">Lolos OSN-SF</option>
+              <option value="lolos_osnf">Lolos OSN-F</option>
+              <option value="jadi_medalis">Medalis</option>
+            </select>
           </div>
 
           <div class="flex gap-3">
@@ -1030,6 +1068,12 @@
         const params = getFilters();
         params.set("nama", nama);
 
+        const exportMode = document.querySelector('input[name="export-mode"]:checked').value;
+        params.set("export_mode", exportMode);
+        if (exportMode === "bidang") {
+          params.set("tahapan_col", document.getElementById("export-tahapan-col").value);
+        }
+
         // Tampilkan state loading
         showExportStatus("loading", "File sedang diproses...");
 
@@ -1081,13 +1125,17 @@
         }
       }
 
+      function toggleBidangOption(mode) {
+        document.getElementById("tahapan-select-wrap").classList.toggle("hidden", mode !== "bidang");
+      }
+
       // ── Init ─────────────────────────────────────────────────────────
       const tahunSelect = document.getElementById("f-tahun");
 
       // 1. Ambil semua angka tahun yang benar-benar dicetak ke dalam dropdown
       const availableYears = Array.from(tahunSelect.options)
-        .map(o => parseInt(o.value))
-        .filter(val => !isNaN(val));
+        .map((o) => parseInt(o.value))
+        .filter((val) => !isNaN(val));
 
       // 2. Cari angka yang paling besar (tahun terbaru)
       if (availableYears.length > 0) {
