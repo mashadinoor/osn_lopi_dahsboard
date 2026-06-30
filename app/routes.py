@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, jsonify, send_file
 from app.database import (
     get_filter_options, get_kabkota,
     pivot_provinsi, pivot_kabkota, pivot_sekolah, pivot_by_bidang,
-    summary_cards, funnel_data, map_data
+    summary_cards, funnel_data, map_data, map_data_kabkota
 )
 from app.export import generate_pdf, generate_pdf_bidang
 import io
@@ -57,7 +57,14 @@ def api_funnel():
 
 @bp.route('/api/map')
 def api_map():
-    df = map_data(get_filters())
+    from app.database import map_data_kabkota
+    df = map_data_kabkota(get_filters())
+    return jsonify(df.to_dict(orient='records'))
+
+@bp.route('/api/map/kabkota')
+def api_map_kabkota():
+    from app.database import map_data_kabkota
+    df = map_data_kabkota(get_filters())
     return jsonify(df.to_dict(orient='records'))
 
 

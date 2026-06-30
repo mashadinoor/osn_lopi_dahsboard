@@ -901,22 +901,19 @@
         }).addTo(leafletMap);
 
         // Load kedua GeoJSON sekali saja
-        const [rProv, rKab] = await Promise.all([
-          fetch("/static/geojson/indonesia_provinsi.geojson"),
-          // fetch("/static/geojson/indonesia_kabupaten.geojson")
-        ]);
+        const [rProv, rKab] = await Promise.all([fetch("/static/geojson/indonesia_provinsi.geojson"), fetch("/static/geojson/indonesia_kabupaten.geojson")]);
         geoProvinsi = await rProv.json();
-        // geoKabupaten = await rKab.json();
+        geoKabupaten = await rKab.json();
 
         // Switch layer saat zoom berubah
-        // leafletMap.on("zoomend", () => {
-        //   const z = leafletMap.getZoom();
-        //   const mode = z >= ZOOM_THRESHOLD ? "kabupaten" : "provinsi";
-        //   if (mode !== currentMapMode) {
-        //     currentMapMode = mode;
-        //     renderMapLayer();
-        //   }
-        // });
+        leafletMap.on("zoomend", () => {
+          const z = leafletMap.getZoom();
+          const mode = z >= ZOOM_THRESHOLD ? "kabupaten" : "provinsi";
+          if (mode !== currentMapMode) {
+            currentMapMode = mode;
+            renderMapLayer();
+          }
+        });
       }
 
       function buildLookup(data, keyField) {
@@ -1051,13 +1048,8 @@
         mapDataCache = await resProv.json();
 
         // Kabupaten di-hold dulu
-        // const resKab = await fetch('/api/map/kabkota?' + getFilters());
-        // mapKabCache  = await resKab.json();
-
-        // Load data provinsi dan kabupaten sekaligus
-        // const [resProv, resKab] = await Promise.all([fetch("/api/map?" + getFilters()), fetch("/api/map/kabkota?" + getFilters())]);
-        // mapDataCache = await resProv.json();
-        // mapKabCache = await resKab.json();
+        const resKab = await fetch("/api/map/kabkota?" + getFilters());
+        mapKabCache = await resKab.json();
 
         renderMapLayer();
       }

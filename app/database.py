@@ -201,6 +201,25 @@ def map_data(filters):
     conn.close()
     return df
 
+def map_data_kabkota(filters):
+    f = {k: v for k, v in filters.items() if k not in ['bidang', 'kab_kota']}
+    where, params = build_where(f)
+    conn = get_conn()
+    df = pd.read_sql_query(f"""
+        SELECT
+            provinsi,
+            kab_kota,
+            SUM(lolos_osnp)   AS lolos_osnp,
+            SUM(lolos_osnsf)  AS lolos_osnsf,
+            SUM(lolos_osnf)   AS lolos_osnf,
+            SUM(jadi_medalis) AS jadi_medalis
+        FROM osn_siswa {where}
+        GROUP BY provinsi, kab_kota
+        ORDER BY lolos_osnp DESC
+    """, conn, params=params)
+    conn.close()
+    return df
+
 def pivot_by_bidang(filters, pivot_type, tahapan_col):
     """
     Pivot Mode B: Bidang sebagai kolom, wilayah sebagai baris.
