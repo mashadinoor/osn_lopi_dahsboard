@@ -373,7 +373,8 @@
             </div>
           </div>
 
-          <div class="flex flex-col gap-1 min-w-[140px] flex-1">
+          <!-- Bidang (single) - hidden di dashboard, tetap ada di DOM untuk export modal -->
+          <div class="hidden flex-col gap-1 min-w-[140px] flex-1">
             <label class="text-xs text-slate-500">Bidang</label>
             <select id="f-bidang" onchange="applyFilters()" class="border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white">
               <option value="semua">Semua Bidang</option>
@@ -694,9 +695,25 @@
       async function loadSummary() {
         const res = await fetch("/api/summary?" + getFilters());
         const data = await res.json();
-        ["total_lolos_osnp", "total_lolos_osnsf", "total_lolos_osnf", "total_medalis"].forEach((k) => {
+        const labels = {
+          total_lolos_osnp: { full: true }, // OSP tetap tampil angka meski 0
+          total_lolos_osnsf: { full: false },
+          total_lolos_osnf: { full: false },
+          total_medalis: { full: false },
+        };
+        Object.keys(labels).forEach((k) => {
           const el = document.getElementById("card-" + k);
-          if (el) el.textContent = fmt(data[k]);
+          if (!el) return;
+          const val = data[k];
+          if (!labels[k].full && (!val || val === 0)) {
+            el.textContent = "Belum ada Data";
+            el.classList.add("text-2xl");
+            el.classList.remove("text-2xl");
+          } else {
+            el.textContent = fmt(val);
+            el.classList.add("text-2xl");
+            el.classList.remove("text-2xl");
+          }
         });
       }
 
